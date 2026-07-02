@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PL Journey Prototype — Login Branching Demo</title>
+
+<!-- ============================================================
+     PL Journey — Login-Gated Branching Prototype
+     Credit Hero Club / Organic Growth
+     Tokens: tokens.css
+     Chrome based on chc-shell.html
+     ============================================================ -->
+<link rel="stylesheet" href="tokens.css">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body {
+    background: var(--mh-bg-subtle);
+    color: var(--mh-text-primary);
+    font-family: var(--mh-font-zh);
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: inherit; text-decoration: none; }
+  button { font-family: inherit; cursor: pointer; }
+  img { display: block; }
+
+  /* ─── PASSWORD GATE ───────────────────────────────────────── */
+  #gate {
+    position: fixed; inset: 0; z-index: 1000;
+    background: var(--mh-primary-500);
+    display: flex; align-items: center; justify-content: center;
+    padding: var(--mh-space-4);
+  }
+  #gate.hidden { display: none; }
+  .gate-card {
+    background: var(--mh-bg-page);
+    border-radius: var(--mh-radius-lg);
+    box-shadow: var(--mh-shadow-xl);
+    padding: var(--mh-space-6) var(--mh-space-5);
+    width: 100%; max-width: 360px;
+    text-align: center;
+  }
+  .gate-card img { height: 24px; width: auto; margin: 0 auto var(--mh-space-5); }
+  .gate-card h1 {
+    font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh);
+    margin-bottom: var(--mh-space-2);
+  }
+  .gate-card p {
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+    color: var(--mh-text-secondary);
+    margin-bottom: var(--mh-space-5);
+  }
+  .gate-card input {
+    width: 100%;
+    padding: 12px 14px;
+    font: var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);
+    border: 1px solid var(--mh-border-strong);
+    border-radius: var(--mh-radius-md);
+    margin-bottom: var(--mh-space-3);
+  }
+  .gate-card input:focus { outline: 2px solid var(--mh-border-focus); border-color: var(--mh-border-focus); }
+  .gate-card .gate-err {
+    color: var(--mh-secondary-900);
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    min-height: 16px; margin-bottom: var(--mh-space-2); display: block;
+  }
+
+  /* ─── BUTTONS ─────────────────────────────────────────────── */
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    padding: 12px 18px;
+    border-radius: var(--mh-radius-md);
+    font: var(--mh-fw-semibold) var(--mh-fs-button-md)/1 var(--mh-font-zh);
+    border: 1px solid transparent;
+    transition: filter 120ms ease, box-shadow 120ms ease;
+    text-align: center;
+  }
+  .btn:hover { filter: brightness(1.04); }
+  .btn--primary { background: var(--mh-secondary-800); color: var(--mh-text-primary); }
+  .btn--brand   { background: var(--mh-primary-500); color: var(--mh-text-on-brand); }
+  .btn--outline { background: transparent; border-color: var(--mh-primary-500); color: var(--mh-primary-500); }
+  .btn--ghost   { background: var(--mh-gray-100); color: var(--mh-text-secondary); }
+  .btn--block   { width: 100%; }
+  .btn--google  {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-strong);
+    color: var(--mh-text-primary); gap: 10px; font-size: var(--mh-fs-body-2);
+  }
+  .btn:disabled { opacity: .45; cursor: not-allowed; filter: none; }
+
+  /* ─── DEMO CONTROL BAR ────────────────────────────────────── */
+  .demo-bar {
+    position: sticky; top: 0; z-index: 200;
+    background: var(--mh-gray-900);
+    color: var(--mh-text-on-brand);
+    border-bottom: 2px dashed var(--mh-secondary-700);
+    padding: 10px var(--mh-space-4);
+    display: flex; align-items: center; gap: var(--mh-space-3);
+    flex-wrap: wrap;
+  }
+  .demo-bar__tag {
+    font: var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);
+    letter-spacing: .12em;
+    background: var(--mh-secondary-800); color: var(--mh-gray-900);
+    padding: 4px 8px; border-radius: var(--mh-radius-sm);
+  }
+  .demo-bar__label {
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    opacity: .85;
+  }
+  .demo-toggle { display: inline-flex; border-radius: var(--mh-radius-pill); background: var(--mh-gray-700); padding: 3px; }
+  .demo-toggle button {
+    border: none; background: transparent; color: var(--mh-text-on-brand);
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh);
+    padding: 7px 14px; border-radius: var(--mh-radius-pill);
+    opacity: .7;
+  }
+  .demo-toggle button.active { background: var(--mh-primary-500); opacity: 1; }
+  .demo-bar__spacer { flex: 1 1 auto; }
+  .demo-bar__link {
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh);
+    text-decoration: underline; color: var(--mh-secondary-700); cursor: pointer;
+    background: none; border: none;
+  }
+
+  /* ─── HEADER ──────────────────────────────────────────────── */
+  .chc-header {
+    background: var(--mh-bg-page);
+    border-bottom: 1px solid var(--mh-border-default);
+    padding: 12px var(--mh-space-4);
+    display: flex; align-items: center; justify-content: space-between; gap: var(--mh-space-3);
+  }
+  .chc-header__logo { height: 22px; width: auto; }
+  .chc-header__nav { display: none; gap: var(--mh-space-5); }
+  .chc-header__nav a { font: var(--mh-fw-medium) var(--mh-fs-body-2)/1 var(--mh-font-zh); color: var(--mh-text-primary); }
+  .chc-header__right { display: flex; align-items: center; gap: var(--mh-space-3); }
+  .chc-header__action {
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh);
+    color: var(--mh-primary-500);
+    padding: 7px 14px; border: 1px solid var(--mh-primary-500); border-radius: var(--mh-radius-md);
+  }
+  .chc-header__member { display: flex; align-items: center; gap: var(--mh-space-2); }
+  .chc-header__member .name { font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh); }
+  .chc-header__avatar {
+    width: 32px; height: 32px; border-radius: var(--mh-radius-full);
+    background: var(--mh-primary-500); color: var(--mh-text-on-brand);
+    display: flex; align-items: center; justify-content: center;
+    font: var(--mh-fw-bold) var(--mh-fs-body-2)/1 var(--mh-font-en);
+  }
+  @media (min-width: 768px) {
+    .chc-header { padding: 14px var(--mh-space-5); }
+    .chc-header__nav { display: flex; }
+    .chc-header__logo { height: 26px; }
+  }
+  @media (min-width: 1280px) { .chc-header { padding: 16px var(--mh-space-6); } }
+
+  /* ─── LAYOUT WRAPPER ──────────────────────────────────────── */
+  .page { max-width: 1216px; margin: 0 auto; padding: var(--mh-space-5) var(--mh-space-4) var(--mh-space-8); }
+  @media (min-width: 768px) { .page { padding: var(--mh-space-6) var(--mh-space-5) var(--mh-space-9); } }
+
+  /* CHC Section wrapper — matching chc-shell.html convention */
+  .chc-section {
+    padding: var(--mh-space-5) 0;
+  }
+  @media (min-width: 768px) { .chc-section { padding: var(--mh-space-6) 0; } }
+
+  .screen { display: none; }
+  .screen.active { display: block; animation: fade .25s ease; }
+  @keyframes fade { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+  .h-page { font: var(--mh-fw-bold) var(--mh-fs-display-1)/var(--mh-lh-display-1) var(--mh-font-zh); margin-bottom: var(--mh-space-2); }
+  @media (min-width: 768px) { .h-page { font-size: var(--mh-fs-display-2); line-height: var(--mh-lh-display-2); } }
+  .sub-page { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); margin-bottom: var(--mh-space-5); }
+
+  /* ─── STEP INDICATOR ──────────────────────────────────────── */
+  .stepper {
+    display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+    margin-bottom: var(--mh-space-5);
+    padding: var(--mh-space-3) var(--mh-space-4);
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-md);
+  }
+  .stepper__title { font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh); color: var(--mh-text-muted); margin-right: var(--mh-space-2); }
+  .stepper__dot {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 22px; height: 22px; border-radius: var(--mh-radius-full);
+    font: var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);
+    background: var(--mh-gray-200); color: var(--mh-text-muted);
+    cursor: pointer; transition: transform .1s ease;
+  }
+  .stepper__dot:hover { transform: scale(1.15); }
+  .stepper__dot:focus-visible { outline: 2px solid var(--mh-border-focus); outline-offset: 2px; }
+  .stepper__dot.done { background: var(--seedly-secondary-300); color: var(--mh-gray-900); }
+  .stepper__dot.current { background: var(--mh-primary-500); color: var(--mh-text-on-brand); }
+  .stepper__line { width: 14px; height: 2px; background: var(--mh-border-strong); }
+
+  /* ─── INTRO SCREEN ────────────────────────────────────────── */
+  .intro-hero {
+    background: var(--mh-primary-500); color: var(--mh-text-on-brand);
+    border-radius: var(--mh-radius-lg); padding: var(--mh-space-6) var(--mh-space-5);
+    margin-bottom: var(--mh-space-5);
+  }
+  .intro-hero .eyebrow { font: var(--mh-fw-semibold) var(--mh-fs-overline)/1 var(--mh-font-zh); letter-spacing: .06em; opacity: .9; text-transform: uppercase; }
+  .intro-hero h1 { font: var(--mh-fw-bold) var(--mh-fs-display-2)/var(--mh-lh-display-2) var(--mh-font-zh); margin: var(--mh-space-2) 0 var(--mh-space-3); }
+  .intro-hero p { font: var(--mh-fw-medium) var(--mh-fs-body-1)/var(--mh-lh-body-1-relaxed) var(--mh-font-zh); max-width: 60ch; opacity: .95; }
+  @media (min-width: 1280px) { .intro-hero h1 { font-size: var(--mh-fs-display-3); line-height: var(--mh-lh-display-3); } }
+
+  .changes-grid { display: grid; grid-template-columns: 1fr; gap: var(--mh-space-4); margin-bottom: var(--mh-space-5); }
+  @media (min-width: 768px) { .changes-grid { grid-template-columns: 1fr 1fr; } }
+  .change-col {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-lg); padding: var(--mh-space-5); box-shadow: var(--mh-shadow-block);
+  }
+  .change-col h3 { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); margin-bottom: 4px; display: flex; align-items: center; gap: var(--mh-space-2); }
+  .change-col .pill {
+    font: var(--mh-fw-semibold) var(--mh-fs-badge)/1 var(--mh-font-zh);
+    padding: 4px 10px; border-radius: var(--mh-radius-pill);
+  }
+  .change-col.in .pill  { background: var(--seedly-secondary-50); color: var(--seedly-secondary-700); }
+  .change-col.out .pill { background: var(--mh-gray-100); color: var(--mh-text-secondary); }
+  .change-col ul { list-style: none; margin-top: var(--mh-space-3); }
+  .change-col li { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); padding: 8px 0 8px 24px; position: relative; border-bottom: 1px solid var(--mh-border-default); }
+  .change-col li:last-child { border-bottom: none; }
+  .change-col.in li::before  { content: '✓'; position: absolute; left: 0; color: var(--seedly-secondary-600); font-weight: 700; }
+  .change-col.out li::before { content: '•'; position: absolute; left: 6px; color: var(--mh-text-muted); font-weight: 700; }
+
+  .intro-actions { display: flex; flex-direction: column; gap: var(--mh-space-3); }
+  @media (min-width: 768px) { .intro-actions { flex-direction: row; } }
+
+  .callout {
+    background: var(--mh-secondary-50); border: 1px dashed var(--mh-secondary-800);
+    border-radius: var(--mh-radius-md); padding: var(--mh-space-4);
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+    color: var(--mh-text-secondary); margin-bottom: var(--mh-space-5);
+  }
+  .callout b { color: var(--mh-text-primary); }
+
+  /* ─── CALCULATOR CARD ─────────────────────────────────────── */
+  .calc-card {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-lg); box-shadow: var(--mh-shadow-block);
+    padding: var(--mh-space-4) var(--mh-space-5); margin-bottom: var(--mh-space-5);
+  }
+  .calc-card__title {
+    font: var(--mh-fw-bold) var(--mh-fs-title-2)/var(--mh-lh-title-2) var(--mh-font-zh);
+    margin-bottom: var(--mh-space-3);
+  }
+  .calc-card__inputs { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mh-space-4); }
+  .calc-field label {
+    display: block; font: var(--mh-fw-semibold) var(--mh-fs-caption)/1.3 var(--mh-font-zh);
+    color: var(--mh-text-muted); margin-bottom: 6px;
+  }
+  .calc-field input, .calc-field select {
+    width: 100%; padding: 10px 12px;
+    font: var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);
+    border: 1px solid var(--mh-border-strong); border-radius: var(--mh-radius-md);
+    background: var(--mh-bg-page);
+  }
+  .calc-note {
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    color: var(--mh-text-muted); margin-top: var(--mh-space-3);
+  }
+
+  /* ─── PRODUCT TABLE HEADER (desktop) ─────────────────────── */
+  .loan-thead { display: none; }
+  @media (min-width: 1024px) {
+    .loan-thead {
+      display: flex; align-items: center; gap: var(--mh-space-4);
+      padding: 0 var(--mh-space-5) var(--mh-space-2);
+      font: var(--mh-fw-semibold) var(--mh-fs-caption)/1.2 var(--mh-font-zh);
+      color: var(--mh-text-muted);
+    }
+    .loan-thead .lt-prod  { min-width: 160px; flex-shrink: 0; }
+    .loan-thead .lt-odds  { min-width: 180px; flex-shrink: 0; }
+    .loan-thead .lt-metrics { flex: 1; min-width: 0; display: grid; grid-template-columns: repeat(4, 1fr); gap: var(--mh-space-3); }
+    .loan-thead .lt-apply { min-width: 110px; flex-shrink: 0; }
+  }
+
+  /* ─── EDM (reward email) ─────────────────────────────────── */
+  .edm { max-width: 600px; margin: 0 auto; background: var(--mh-bg-page); border: 1px solid var(--mh-border-default); border-radius: var(--mh-radius-lg); overflow: hidden; box-shadow: var(--mh-shadow-md); }
+  .edm__hero { background: var(--mh-primary-500); padding: var(--mh-space-6) var(--mh-space-5) var(--mh-space-5); text-align: center; }
+  .edm__hero img { height: 22px; margin: 0 auto var(--mh-space-3); }
+  .edm__gift { font-size: 46px; line-height: 1; }
+  .edm__body { padding: var(--mh-space-5); }
+  .edm__body h2 { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); margin-bottom: var(--mh-space-3); }
+  .edm__body p { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); margin-bottom: var(--mh-space-3); }
+  .edm__body .edm__step b { color: var(--mh-primary-600); }
+  .edm__body .edm__lead b { color: var(--mh-primary-600); }
+  .edm__link { color: var(--mh-primary-500); text-decoration: underline; font-weight: var(--mh-fw-semibold); }
+  .edm__cta { background: var(--mh-secondary-800); color: var(--mh-text-primary); border: none; border-radius: var(--mh-radius-md); padding: 12px 20px; font: var(--mh-fw-bold) var(--mh-fs-button-md)/1 var(--mh-font-zh); cursor: pointer; margin: var(--mh-space-2) 0 var(--mh-space-4); }
+  .edm__fine { font-size: var(--mh-fs-caption); }
+  .edm__divider { border: none; border-top: 1px solid var(--mh-border-default); margin: var(--mh-space-5) 0; }
+  .edm__progress { display: flex; gap: var(--mh-space-4); align-items: flex-start; flex-wrap: wrap; }
+  .edm__mini { width: 132px; border: 1px solid var(--mh-border-default); border-radius: var(--mh-radius-md); overflow: hidden; flex-shrink: 0; }
+  .edm__mini .mini-bar { background: var(--mh-primary-500); color: var(--mh-text-on-brand); padding: 6px 8px; font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh); }
+  .edm__mini .mini-body { padding: 8px; font: var(--mh-fw-medium) var(--mh-fs-caption)/1.3 var(--mh-font-zh); color: var(--mh-text-secondary); }
+  .edm__foot { background: var(--mh-primary-700); color: var(--mh-text-on-brand); padding: var(--mh-space-5); text-align: center; }
+  .edm__foot img { height: 20px; margin: 0 auto var(--mh-space-2); }
+  .edm__foot p { font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-en); opacity: .85; }
+  .edm__loginbtn { background: var(--mh-primary-500); color: var(--mh-text-on-brand); border: none; border-radius: var(--mh-radius-md); padding: 10px 20px; font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh); cursor: pointer; }
+
+  /* ─── LOAN CARDS ──────────────────────────────────────────── */
+  .listing-intro { margin-bottom: var(--mh-space-5); }
+  .cards { display: grid; grid-template-columns: 1fr; gap: var(--mh-space-4); }
+  @media (min-width: 768px) { .cards { grid-template-columns: 1fr 1fr; } }
+  /* Desktop: switch to a single-column full-width comparison table */
+  @media (min-width: 1024px) {
+    .cards { grid-template-columns: 1fr; gap: var(--mh-space-2); }
+    .cards .loan-card {
+      flex-direction: row; align-items: center; gap: var(--mh-space-4);
+      padding: var(--mh-space-4) var(--mh-space-5);
+    }
+    .cards .loan-card__head { flex-direction: column; align-items: flex-start; min-width: 160px; flex-shrink: 0; }
+    .cards .loan-card__name { font-size: var(--mh-fs-body-2); }
+    .cards .loan-card__metrics { grid-template-columns: repeat(4, 1fr); flex: 1; min-width: 0; }
+    .cards .loan-card__metrics .metric .k { display: none; } /* labels live in the table header */
+    .cards .loan-card .odds { flex-shrink: 0; min-width: 180px; }
+    .cards .loan-card .reward-tag { flex-shrink: 0; }
+    .cards .loan-card .btn--apply { width: auto; min-width: 110px; flex-shrink: 0; align-self: center; }
+  }
+  /* Mobile/tablet: apply button full-width */
+  @media (max-width: 1023px) { .loan-card .btn--apply { width: 100%; } }
+
+  .loan-card {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-lg); box-shadow: var(--mh-shadow-block);
+    padding: var(--mh-space-5); display: flex; flex-direction: column; gap: var(--mh-space-3);
+  }
+  .loan-card__head { display: flex; align-items: center; gap: var(--mh-space-3); }
+  .loan-card__logo { height: 34px; width: auto; max-width: 120px; object-fit: contain; }
+  .loan-card__name { font: var(--mh-fw-bold) var(--mh-fs-title-2)/var(--mh-lh-title-2) var(--mh-font-zh); }
+  .loan-card__metrics { display: grid; grid-template-columns: 1fr 1fr; gap: var(--mh-space-3); }
+  .metric .k { font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh); color: var(--mh-text-muted); }
+  .metric .v { font: var(--mh-fw-bold) var(--mh-fs-body-1)/var(--mh-lh-body-1) var(--mh-font-zh); }
+  .metric .v small { font-weight: var(--mh-fw-medium); font-size: var(--mh-fs-caption); color: var(--mh-text-secondary); }
+  .metric .v.reward-metric { font-size: var(--mh-fs-caption); font-weight: var(--mh-fw-semibold); line-height: 1.4; color: var(--mh-secondary-900); }
+
+  .reward-tag {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: var(--mh-secondary-50); color: var(--mh-secondary-900);
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh);
+    padding: 8px 12px; border-radius: var(--mh-radius-md); align-self: flex-start;
+  }
+
+  /* Approval Odds slot */
+  .odds {
+    border-radius: var(--mh-radius-md); padding: 10px 12px;
+    display: flex; align-items: center; gap: var(--mh-space-2);
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1.2 var(--mh-font-zh);
+  }
+  .odds--high { background: var(--seedly-secondary-50); color: var(--seedly-secondary-700); }
+  .odds--mid  { background: var(--mh-secondary-50); color: var(--mh-secondary-900); }
+  .odds__dot { width: 10px; height: 10px; border-radius: var(--mh-radius-full); background: currentColor; }
+  .odds--locked {
+    position: relative; background: var(--mh-gray-100); color: var(--mh-text-secondary);
+    cursor: pointer; overflow: hidden;
+  }
+  .odds--locked .odds__masked {
+    filter: blur(4px); user-select: none; opacity: .6; flex: 1;
+    display: flex; align-items: center; gap: var(--mh-space-2);
+  }
+  .odds--locked .odds__overlay {
+    position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 6px;
+    background: var(--mh-gray-100);
+    opacity: .9;
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh);
+    color: var(--mh-primary-500);
+  }
+
+  /* Reward redemption section card on listing */
+  .reward-section {
+    margin-top: var(--mh-space-6);
+    background: linear-gradient(135deg, var(--mh-secondary-50), var(--mh-bg-page));
+    border: 1px solid var(--mh-secondary-700);
+    border-radius: var(--mh-radius-lg); padding: var(--mh-space-5);
+    display: flex; flex-direction: column; gap: var(--mh-space-2);
+  }
+  .reward-section h3 { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); }
+  .reward-section p { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); }
+  .reward-section .btn { align-self: flex-start; margin-top: var(--mh-space-2); }
+  .reward-section.pulse { animation: pulseGlow 1.4s ease 2; }
+  @keyframes pulseGlow {
+    0%,100% { box-shadow: 0 0 0 0 transparent; }
+    50% { box-shadow: 0 0 0 6px var(--mh-secondary-200); }
+  }
+
+  /* ─── GENERIC PANELS ──────────────────────────────────────── */
+  .panel {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-lg); box-shadow: var(--mh-shadow-block);
+    padding: var(--mh-space-5); margin-bottom: var(--mh-space-4);
+  }
+  .panel--center { text-align: center; }
+
+  /* Interstitial */
+  .interstitial { text-align: center; padding: var(--mh-space-8) var(--mh-space-5); }
+  .spinner {
+    width: 48px; height: 48px; border-radius: var(--mh-radius-full);
+    border: 4px solid var(--mh-primary-100); border-top-color: var(--mh-primary-500);
+    margin: 0 auto var(--mh-space-5); animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .interstitial h2 { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); margin-bottom: var(--mh-space-2); }
+  .interstitial p { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); }
+
+  /* Simulated provider page */
+  .provider-frame {
+    border: 2px solid var(--mh-border-strong); border-radius: var(--mh-radius-lg);
+    overflow: hidden; background: var(--mh-bg-page); box-shadow: var(--mh-shadow-md);
+  }
+  .provider-urlbar {
+    background: var(--mh-gray-100); border-bottom: 1px solid var(--mh-border-default);
+    padding: 10px var(--mh-space-4); display: flex; align-items: center; gap: var(--mh-space-2);
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/1 var(--mh-font-en); color: var(--mh-text-muted);
+  }
+  .provider-urlbar .lock { font-size: 14px; }
+  .provider-body { padding: var(--mh-space-6) var(--mh-space-5); text-align: center; }
+  .provider-body img { height: 40px; margin: 0 auto var(--mh-space-4); }
+  .provider-body .ext-tag {
+    display: inline-block; font: var(--mh-fw-semibold) var(--mh-fs-badge)/1 var(--mh-font-zh);
+    background: var(--mh-gray-200); color: var(--mh-text-secondary);
+    padding: 4px 10px; border-radius: var(--mh-radius-pill); margin-bottom: var(--mh-space-3);
+  }
+  .provider-body h2 { font: var(--mh-fw-bold) var(--mh-fs-display-1)/var(--mh-lh-display-1) var(--mh-font-zh); margin-bottom: var(--mh-space-2); }
+  .provider-body .arn-box {
+    background: var(--mh-bg-subtle); border: 1px dashed var(--mh-border-strong);
+    border-radius: var(--mh-radius-md); padding: var(--mh-space-3); margin: var(--mh-space-4) 0;
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary);
+  }
+  .provider-body .arn-box b { color: var(--mh-text-primary); font-family: var(--mh-font-en); }
+  .friction-note {
+    background: var(--mh-secondary-50); border-left: 4px solid var(--mh-secondary-900);
+    border-radius: var(--mh-radius-sm); padding: var(--mh-space-4);
+    text-align: left; margin: var(--mh-space-4) 0;
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary);
+  }
+  .friction-note b { color: var(--mh-secondary-900); }
+
+  /* ─── CHC GROWTH HOOK ─────────────────────────────────────── */
+  .chc-hook {
+    border-radius: var(--mh-radius-md); padding: var(--mh-space-4);
+    margin: var(--mh-space-4) 0;
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+  }
+  .chc-hook--satisfied {
+    background: var(--seedly-secondary-50); border: 1px solid var(--seedly-secondary-300);
+    color: var(--seedly-secondary-700);
+    display: flex; align-items: flex-start; gap: var(--mh-space-3);
+  }
+  .chc-hook--satisfied .hook-icon { font-size: 20px; flex-shrink: 0; margin-top: 2px; }
+  .chc-hook--satisfied strong { color: var(--seedly-secondary-800); }
+  .chc-hook--nudge {
+    background: var(--mh-primary-50); border: 1px solid var(--mh-primary-200);
+    color: var(--mh-text-secondary);
+  }
+  .chc-hook--nudge strong { color: var(--mh-primary-600); }
+  .chc-hook--nudge a { color: var(--mh-primary-500); text-decoration: underline; cursor: pointer; }
+
+  /* ─── CREDIT REPORT CTA BANNER ───────────────────────────── */
+  .cr-banner {
+    background: var(--mh-primary-500);
+    border-radius: var(--mh-radius-lg);
+    padding: var(--mh-space-5);
+    margin-top: var(--mh-space-5);
+    display: flex; flex-direction: column; gap: var(--mh-space-3);
+  }
+  .cr-banner__body { color: var(--mh-text-on-brand); }
+  .cr-banner__eyebrow {
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh);
+    opacity: .85; margin-bottom: 4px; text-transform: uppercase; letter-spacing: .05em;
+  }
+  .cr-banner__title {
+    font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh);
+    margin-bottom: var(--mh-space-2);
+  }
+  .cr-banner__sub {
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+    opacity: .9;
+  }
+  .cr-banner .btn--cr {
+    background: var(--mh-text-on-brand); color: var(--mh-primary-500);
+    border: none; align-self: flex-start;
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh);
+    padding: 10px 16px; border-radius: var(--mh-radius-md); cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  @media (min-width: 768px) {
+    .cr-banner { flex-direction: row; align-items: center; justify-content: space-between; }
+    .cr-banner .btn--cr { flex-shrink: 0; }
+  }
+
+  /* ─── EMAIL JOURNEY MARKER ────────────────────────────────── */
+  .email-marker {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--mh-gray-100); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-pill);
+    padding: 6px 14px; margin: var(--mh-space-3) 0;
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/1.4 var(--mh-font-zh);
+    color: var(--mh-text-secondary);
+  }
+  .email-marker .em-icon { font-size: 16px; }
+
+  /* ─── MY REWARDS SCREEN ───────────────────────────────────── */
+  .rewards-hero {
+    background: var(--mh-primary-500); border-radius: var(--mh-radius-lg);
+    padding: var(--mh-space-5) var(--mh-space-5) var(--mh-space-6);
+    color: var(--mh-text-on-brand); margin-bottom: var(--mh-space-5);
+  }
+  .rewards-hero .path-label {
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/1 var(--mh-font-en);
+    opacity: .7; margin-bottom: var(--mh-space-2);
+  }
+  .rewards-hero h2 { font: var(--mh-fw-bold) var(--mh-fs-display-1)/var(--mh-lh-display-1) var(--mh-font-zh); margin-bottom: var(--mh-space-2); }
+  .rewards-hero p { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); opacity: .9; }
+
+  .progress-strip {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-lg); padding: var(--mh-space-4); margin-bottom: var(--mh-space-4);
+    box-shadow: var(--mh-shadow-block);
+  }
+  .progress-strip__label {
+    font: var(--mh-fw-bold) var(--mh-fs-title-2)/var(--mh-lh-title-2) var(--mh-font-zh);
+    margin-bottom: var(--mh-space-3);
+  }
+  .progress-steps { display: flex; gap: var(--mh-space-2); flex-wrap: wrap; }
+  .progress-step {
+    display: flex; align-items: center; gap: 6px;
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/1.3 var(--mh-font-zh);
+    padding: 8px 12px; border-radius: var(--mh-radius-md);
+  }
+  .progress-step.done { background: var(--seedly-secondary-50); color: var(--seedly-secondary-700); }
+  .progress-step.active { background: var(--mh-primary-50); color: var(--mh-primary-600); border: 1px solid var(--mh-primary-200); }
+  .progress-step.pending { background: var(--mh-gray-100); color: var(--mh-text-muted); }
+  .progress-step .ps-icon { font-size: 14px; }
+
+  .claim-card {
+    background: var(--mh-bg-page); border: 2px solid var(--mh-secondary-700);
+    border-radius: var(--mh-radius-lg); padding: var(--mh-space-5);
+    margin-bottom: var(--mh-space-4); box-shadow: var(--mh-shadow-block-interactive);
+    display: flex; flex-direction: column; gap: var(--mh-space-3);
+  }
+  .claim-card__head { display: flex; align-items: center; gap: var(--mh-space-3); }
+  .claim-card__logo { height: 30px; width: auto; max-width: 100px; object-fit: contain; }
+  .claim-card__badge {
+    font: var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-zh);
+    background: var(--mh-secondary-800); color: var(--mh-gray-900);
+    padding: 4px 10px; border-radius: var(--mh-radius-pill);
+  }
+  .claim-card__title { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); }
+  .claim-card__sub { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); }
+  .claim-card .btn { align-self: flex-start; }
+
+  /* ─── LOGIN SCREEN ────────────────────────────────────────── */
+  .login-screen {
+    max-width: 400px; margin: 0 auto;
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-lg); box-shadow: var(--mh-shadow-block);
+    padding: var(--mh-space-6) var(--mh-space-5); text-align: center;
+  }
+  .login-screen img.ls-logo { height: 24px; width: auto; margin: 0 auto var(--mh-space-5); }
+  .login-screen h2 { font: var(--mh-fw-bold) var(--mh-fs-display-1)/var(--mh-lh-display-1) var(--mh-font-zh); margin-bottom: var(--mh-space-2); }
+  .login-screen .ls-sub { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); margin-bottom: var(--mh-space-5); }
+  .login-screen .divider {
+    display: flex; align-items: center; gap: var(--mh-space-3); margin: var(--mh-space-4) 0;
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/1 var(--mh-font-zh); color: var(--mh-text-muted);
+  }
+  .login-screen .divider::before, .login-screen .divider::after {
+    content: ''; flex: 1; height: 1px; background: var(--mh-border-default);
+  }
+  .ls-google-icon {
+    width: 20px; height: 20px; flex-shrink: 0;
+    background: var(--mh-bg-subtle); border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    font-size: 13px; line-height: 1;
+  }
+  .login-screen .ls-terms {
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    color: var(--mh-text-muted); margin-top: var(--mh-space-4);
+  }
+  .login-screen .ls-terms a { color: var(--mh-primary-500); }
+  .login-screen .ls-cancel {
+    background: none; border: none; color: var(--mh-text-muted);
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/1 var(--mh-font-zh);
+    cursor: pointer; margin-top: var(--mh-space-4); text-decoration: underline;
+  }
+
+  /* ─── FORMS ───────────────────────────────────────────────── */
+  .form-head { display: flex; align-items: center; gap: var(--mh-space-3); margin-bottom: var(--mh-space-4); }
+  .form-head img { height: 30px; width: auto; }
+  .form-head h2 { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); }
+  .field { margin-bottom: var(--mh-space-4); }
+  .field label { display: block; font: var(--mh-fw-semibold) var(--mh-fs-form-label)/1.3 var(--mh-font-zh); margin-bottom: 6px; }
+  .field input[type=text], .field input[type=email], .field input[type=tel], .field input[type=date] {
+    width: 100%; padding: 12px 14px;
+    font: var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);
+    border: 1px solid var(--mh-border-strong); border-radius: var(--mh-radius-md); background: var(--mh-bg-page);
+  }
+  .field input:focus { outline: 2px solid var(--mh-border-focus); border-color: var(--mh-border-focus); }
+  .field input[readonly], .field input.locked {
+    background: var(--mh-gray-100); color: var(--mh-text-secondary); cursor: not-allowed;
+  }
+  .field .prefill-note {
+    display: inline-flex; align-items: center; gap: 4px; margin-top: 6px;
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    color: var(--seedly-secondary-700);
+  }
+  .field .lock-ic { font-size: 13px; }
+  .radio-group { display: flex; flex-direction: column; gap: var(--mh-space-2); }
+  .radio-opt {
+    display: flex; align-items: center; gap: var(--mh-space-3);
+    border: 1px solid var(--mh-border-strong); border-radius: var(--mh-radius-md);
+    padding: 12px 14px; cursor: pointer;
+    font: var(--mh-fw-medium) var(--mh-fs-body-1)/var(--mh-lh-body-1) var(--mh-font-zh);
+  }
+  .radio-opt input { width: 18px; height: 18px; accent-color: var(--mh-primary-500); }
+  .radio-opt:has(input:checked) { border-color: var(--mh-primary-500); background: var(--mh-primary-50); }
+  .form-selected-banner {
+    display: flex; align-items: center; gap: var(--mh-space-2);
+    background: var(--seedly-secondary-50); color: var(--seedly-secondary-700);
+    border-radius: var(--mh-radius-md); padding: 10px 14px; margin-bottom: var(--mh-space-4);
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+  }
+
+  /* ─── REWARD FORMS LIST (logged-out hunt) ─────────────────── */
+  .rf-search {
+    position: relative; margin-bottom: var(--mh-space-4);
+  }
+  .rf-search input {
+    width: 100%; padding: 12px 14px 12px 40px;
+    font: var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);
+    border: 1px solid var(--mh-border-strong); border-radius: var(--mh-radius-md);
+  }
+  .rf-search::before { content: '🔍'; position: absolute; left: 12px; top: 50%; transform: translateY(-50%); }
+  .rf-cat { margin-bottom: var(--mh-space-6); }
+  .rf-cat__anchor { scroll-margin-top: 80px; }
+  .rf-cat__title {
+    font: var(--mh-fw-bold) var(--mh-fs-title-2)/var(--mh-lh-title-2) var(--mh-font-zh);
+    padding: 8px 0; border-bottom: 2px solid var(--mh-primary-500); margin-bottom: var(--mh-space-2);
+  }
+  /* rf table */
+  .rf-table { width: 100%; border-collapse: collapse; margin-bottom: var(--mh-space-3); }
+  .rf-table th {
+    font: var(--mh-fw-semibold) var(--mh-fs-caption)/1.3 var(--mh-font-zh);
+    color: var(--mh-text-muted); text-align: left;
+    padding: 8px var(--mh-space-3); background: var(--mh-gray-50);
+    border-bottom: 2px solid var(--mh-primary-500);
+  }
+  .rf-table td {
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2) var(--mh-font-zh);
+    padding: 12px var(--mh-space-3);
+    border-bottom: 1px solid var(--mh-border-default);
+    vertical-align: middle;
+  }
+  .rf-table tr:last-child td { border-bottom: none; }
+  .rf-table td:first-child { font-weight: var(--mh-fw-semibold); }
+  .rf-table tr { background: var(--mh-bg-page); }
+  .rf-table tr:hover { background: var(--mh-gray-50); }
+  .rf-row {
+    display: grid; grid-template-columns: 1fr auto; gap: var(--mh-space-2);
+    align-items: center;
+    padding: 12px var(--mh-space-3); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-md); margin-bottom: var(--mh-space-2);
+    background: var(--mh-bg-page);
+  }
+  .rf-row__inst { font: var(--mh-fw-semibold) var(--mh-fs-body-2)/var(--mh-lh-body-2) var(--mh-font-zh); }
+  .rf-row__meta { font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh); color: var(--mh-text-muted); margin-top: 2px; }
+  .rf-row__submit {
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh);
+    color: var(--mh-primary-500); padding: 8px 14px;
+    border: 1px solid var(--mh-primary-500); border-radius: var(--mh-radius-md);
+    background: transparent; white-space: nowrap;
+  }
+  .rf-row.target { animation: none; }
+  .rf-row.hl { border-color: var(--mh-secondary-800); box-shadow: 0 0 0 3px var(--mh-secondary-100); }
+  .rf-hint {
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    color: var(--mh-text-muted); margin-bottom: var(--mh-space-3);
+  }
+  .rf-empty { display: none; padding: var(--mh-space-5); text-align: center; color: var(--mh-text-muted); font: var(--mh-fw-medium) var(--mh-fs-body-2)/1.4 var(--mh-font-zh); }
+
+  /* ─── SUCCESS ─────────────────────────────────────────────── */
+  .success { text-align: center; padding: var(--mh-space-7) var(--mh-space-5); }
+  .success__check {
+    width: 64px; height: 64px; border-radius: var(--mh-radius-full);
+    background: var(--seedly-secondary-300); color: var(--mh-gray-900);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 34px; margin: 0 auto var(--mh-space-5);
+  }
+  .success h2 { font: var(--mh-fw-bold) var(--mh-fs-display-1)/var(--mh-lh-display-1) var(--mh-font-zh); margin-bottom: var(--mh-space-3); }
+  .success p { font: var(--mh-fw-medium) var(--mh-fs-body-1)/var(--mh-lh-body-1-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); max-width: 44ch; margin: 0 auto var(--mh-space-3); }
+  .success .member-note {
+    background: var(--mh-primary-50); color: var(--mh-primary-700);
+    border-radius: var(--mh-radius-md); padding: var(--mh-space-3) var(--mh-space-4);
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+    max-width: 44ch; margin: var(--mh-space-2) auto var(--mh-space-5); display: inline-block;
+  }
+
+  /* ─── COMPARISON SCREEN ───────────────────────────────────── */
+  .cmp-grid { display: grid; grid-template-columns: 1fr; gap: var(--mh-space-4); margin-bottom: var(--mh-space-5); }
+  @media (min-width: 768px) { .cmp-grid { grid-template-columns: 1fr 1fr; } }
+  .cmp-col { border-radius: var(--mh-radius-lg); padding: var(--mh-space-5); box-shadow: var(--mh-shadow-block); }
+  .cmp-col.in  { background: var(--mh-primary-50); border: 1px solid var(--mh-primary-200); }
+  .cmp-col.out { background: var(--mh-gray-50); border: 1px solid var(--mh-border-strong); }
+  .cmp-col h3 { font: var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh); margin-bottom: var(--mh-space-2); }
+  .cmp-count { font: var(--mh-fw-bold) var(--mh-fs-display-4)/1 var(--mh-font-en); margin-bottom: 4px; }
+  .cmp-col.in .cmp-count  { color: var(--mh-primary-600); }
+  .cmp-col.out .cmp-count { color: var(--mh-text-secondary); }
+  .cmp-count small { font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh); }
+  .cmp-steps { list-style: none; margin-top: var(--mh-space-3); counter-reset: s; }
+  .cmp-steps li {
+    position: relative; padding: 8px 8px 8px 30px; counter-increment: s;
+    font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);
+    border-bottom: 1px dashed var(--mh-border-default);
+  }
+  .cmp-steps li:last-child { border-bottom: none; }
+  .cmp-steps li::before {
+    content: counter(s); position: absolute; left: 0; top: 8px;
+    width: 20px; height: 20px; border-radius: var(--mh-radius-full);
+    display: flex; align-items: center; justify-content: center;
+    font: var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);
+  }
+  .cmp-col.in .cmp-steps li::before  { background: var(--mh-primary-500); color: var(--mh-text-on-brand); }
+  .cmp-col.out .cmp-steps li::before { background: var(--mh-gray-400); color: var(--mh-text-on-brand); }
+  .cmp-key {
+    background: var(--mh-bg-page); border: 1px solid var(--mh-border-default);
+    border-radius: var(--mh-radius-md); padding: var(--mh-space-4); margin-top: var(--mh-space-3);
+  }
+  .cmp-key b { display:block; font: var(--mh-fw-bold) var(--mh-fs-body-1)/var(--mh-lh-body-1) var(--mh-font-zh); margin-bottom: 6px; }
+  .cmp-key span { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); color: var(--mh-text-secondary); }
+
+  /* ─── BACK / NAV BAR ──────────────────────────────────────── */
+  .nav-row { display: flex; gap: var(--mh-space-3); flex-wrap: wrap; margin-top: var(--mh-space-5); }
+  .link-back {
+    background: none; border: none; color: var(--mh-primary-500);
+    font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh);
+    cursor: pointer; padding: 8px 0; text-decoration: underline;
+  }
+
+  /* ─── SITE FOOTER ─────────────────────────────────────────── */
+  .chc-footer {
+    background: var(--mh-gray-50); padding: var(--mh-space-5) var(--mh-space-4);
+    font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);
+    color: var(--mh-text-muted); text-align: center;
+    border-top: 1px solid var(--mh-border-default);
+  }
+</style>
+</head>
+<body>
+
+<!-- ═══ PASSWORD GATE ═══════════════════════════════════════ -->
+<div id="gate">
+  <div class="gate-card">
+    <img src="assets/moneyhero-logo.svg" alt="MoneyHero">
+    <h1>Prototype — Password Protected</h1>
+    <p>This is an internal stakeholder demo. Enter the password to continue.</p>
+    <span class="gate-err" id="gateErr"></span>
+    <input type="password" id="gatePw" placeholder="Enter password" autocomplete="off">
+    <button class="btn btn--brand btn--block" id="gateBtn">Enter</button>
+  </div>
+</div>
+
+<!-- ═══ APP ═════════════════════════════════════════════════ -->
+<div id="app" style="display:none;">
+
+  <!-- DEMO CONTROL BAR -->
+  <div class="demo-bar">
+    <span class="demo-bar__tag">DEMO</span>
+    <span class="demo-bar__label">Login state:</span>
+    <div class="demo-toggle" id="loginToggle">
+      <button data-state="in">Logged in</button>
+      <button data-state="out">Logged out</button>
+    </div>
+    <span class="demo-bar__spacer"></span>
+    <button class="demo-bar__link" id="goIntro">Overview</button>
+    <button class="demo-bar__link" id="goCompare">Journey comparison</button>
+  </div>
+
+  <!-- HEADER -->
+  <header class="chc-header">
+    <a href="#" class="chc-header__logo-link" id="headerHome">
+      <img src="assets/moneyhero-logo.svg" alt="MoneyHero" class="chc-header__logo">
+    </a>
+    <nav class="chc-header__nav">
+      <a href="#">貸款</a><a href="#">信用卡</a><a href="#">保險</a>
+      <a href="#">投資戶口</a><a href="#">銀行戶口</a><a href="#">理財文章</a>
+    </nav>
+    <div class="chc-header__right" id="headerRight"><!-- JS fills --></div>
+  </header>
+
+  <div class="page">
+
+    <!-- ════════ SCREEN: INTRO / OVERVIEW ════════ -->
+    <section class="screen" id="screen-intro">
+      <div class="chc-section">
+        <div class="intro-hero">
+          <span class="eyebrow">Credit Hero Club × Personal Loans</span>
+          <h1>How the PL application journey branches on login once Approval Odds goes live</h1>
+          <p>Once Approval Odds — which requires login — is added to the personal loan listing, logged-in members get a streamlined, credit-card-style flow that takes them straight to "My Rewards" to claim; logged-out users follow the existing flow — navigating back manually, hunting for the right reward form, and filling in every field by hand. This demo focuses on the contrast between the two journeys.</p>
+        </div>
+
+        <div class="callout">
+          <b>How to use:</b> Use the toggle in the black DEMO bar at the top to switch between "Logged in ↔ Logged out". Each switch resets to the listing page and runs a full journey in that state. Click "Journey comparison" at any time to see a step-count breakdown.
+        </div>
+
+        <div class="changes-grid">
+          <div class="change-col in">
+            <h3>Logged-in member <span class="pill">Streamlined (CC-style) flow</span></h3>
+            <ul>
+              <li>Approval Odds (High / Medium) shown directly on listing cards</li>
+              <li>After applying, auto-redirected with a clear path back to MoneyHero</li>
+              <li>Lands directly on "My Rewards" showing application progress and a claim card</li>
+              <li>Name / email / phone pre-filled and locked</li>
+              <li>Only needs to enter ARN + select reward</li>
+              <li>CHC membership eligibility already satisfied — no extra steps</li>
+            </ul>
+          </div>
+          <div class="change-col out">
+            <h3>Logged-out user <span class="pill">Existing flow</span></h3>
+            <ul>
+              <li>Approval Odds locked: 🔒 Log in to view your approval chances</li>
+              <li>After applying, lands on provider page with no return button</li>
+              <li>Must navigate back to the listing page and scroll to find the reward section</li>
+              <li>Must hunt for the WeLend form in a long list of reward forms</li>
+              <li>All 6 fields must be filled in manually</li>
+              <li>All fields must be filled in manually — system does not recognise the user</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="intro-actions">
+          <button class="btn btn--brand" id="introStart">Start demo (go to listing page)</button>
+          <button class="btn btn--outline" id="introCompare">Skip to journey comparison</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: LISTING ════════ -->
+    <section class="screen" id="screen-listing">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-listing"></div>
+        <div class="listing-intro">
+          <h1 class="h-page">個人貸款比較</h1>
+          <p class="sub-page" id="listingSub"></p>
+        </div>
+
+        <!-- 快速摘要 calculator card -->
+        <div class="calc-card">
+          <div class="calc-card__title">🧮 快速摘要</div>
+          <div class="calc-card__inputs">
+            <div class="calc-field">
+              <label>貸款額</label>
+              <input type="text" value="HK$200,000" id="calcAmount">
+            </div>
+            <div class="calc-field">
+              <label>還款期</label>
+              <select id="calcTenure">
+                <option>6 個月</option>
+                <option>12 個月</option>
+                <option selected>24 個月</option>
+                <option>36 個月</option>
+                <option>48 個月</option>
+                <option>60 個月</option>
+              </select>
+            </div>
+          </div>
+          <p class="calc-note">*以上數字僅供參考，實際利率及還款金額視乎個別機構審批結果而定。</p>
+        </div>
+
+        <!-- Desktop-only comparison table header (aligns with each loan row) -->
+        <div class="loan-thead" aria-hidden="true">
+          <span class="lt-prod">產品</span>
+          <span class="lt-odds">批核機會</span>
+          <div class="lt-metrics">
+            <span>最低實際年利率</span>
+            <span>MoneyHero獎賞價值</span>
+            <span>每月還款額低至</span>
+            <span>總利息低至</span>
+          </div>
+          <span class="lt-apply"></span>
+        </div>
+
+        <div class="cards" id="loanCards"><!-- JS fills --></div>
+
+        <div class="reward-section" id="rewardSection">
+          <h3>🎁 申請完貸款？立即填表領取獎賞！</h3>
+          <p>專屬獎賞，切勿錯過！完成個人貸款申請後，於此填寫獎賞換領表即可領取迎新禮品。</p>
+          <button class="btn btn--primary" id="rewardSectionBtn">立即填表</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: LOGIN ════════ -->
+    <section class="screen" id="screen-login">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-login"></div>
+        <div class="login-screen">
+          <img src="assets/moneyhero-logo.svg" alt="MoneyHero" class="ls-logo">
+          <h2>立即登入或註冊</h2>
+          <p class="ls-sub">登入即可查看您的批核機會，並享精簡的獎賞換領流程。</p>
+          <button class="btn btn--google btn--block" id="loginGoogle">
+            <span class="ls-google-icon">G</span>
+            以 Google 帳號登入
+          </button>
+          <div class="divider">或</div>
+          <button class="btn btn--brand btn--block" id="loginMH">以 MoneyHero 帳號登入</button>
+          <p class="ls-terms">登入即表示您同意我們的<a href="#">服務條款</a>及<a href="#">私隱政策</a>。</p>
+          <button class="ls-cancel" id="loginCancel">取消，返回列表</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: INTERSTITIAL (logged-in) ════════ -->
+    <section class="screen" id="screen-interstitial">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-interstitial"></div>
+        <div class="panel interstitial">
+          <div class="spinner"></div>
+          <h2>正在跳轉至 WeLend 申請頁面…</h2>
+          <p>我們已識別您的 CHC 會員身份，無需重新填寫聯絡資料。請稍候。</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: PROVIDER (logged-in) ════════ -->
+    <section class="screen" id="screen-provider-in">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-provider-in"></div>
+        <!-- Demo scaffolding label — not part of the simulated page -->
+        <div style="background:var(--mh-gray-900);color:var(--mh-text-on-brand);font:var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-en);padding:8px 14px;border-radius:var(--mh-radius-md) var(--mh-radius-md) 0 0;display:inline-block;margin-bottom:-1px;position:relative;z-index:1;">DEMO — This is WeLend's own application page (external site)</div>
+        <div class="provider-frame">
+          <div class="provider-urlbar"><span class="lock">🔒</span> https://apply.welend.com.hk/personal-loan</div>
+          <div class="provider-body">
+            <img src="assets/provider-logos/welend.webp" alt="WeLend">
+            <span class="ext-tag">WeLend — 貸款申請</span>
+            <h2>您已在 WeLend 完成申請</h2>
+          </div>
+        </div>
+        <!-- Demo nav affordance — NOT shown to a real user -->
+        <div style="border:1px dashed var(--mh-border-strong);background:var(--mh-bg-subtle);border-radius:var(--mh-radius-md);padding:var(--mh-space-4);margin-top:var(--mh-space-4);">
+          <span style="display:inline-block;font:var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);letter-spacing:.1em;background:var(--mh-gray-900);color:var(--mh-text-on-brand);padding:4px 8px;border-radius:var(--mh-radius-sm);margin-bottom:var(--mh-space-2);">DEMO NAVIGATION</span>
+          <p style="font:var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-en);color:var(--mh-text-secondary);margin-bottom:var(--mh-space-3);">Prototype only — WeLend's page does not link back to MoneyHero. In reality the member later receives a reward email (EDM) inviting them to claim. Continue to see it.</p>
+          <button class="btn btn--ghost" id="providerInReturn">Continue to next step →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: EDM (reward email, logged-in) ════════ -->
+    <section class="screen" id="screen-edm">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-edm"></div>
+        <!-- Demo scaffolding label -->
+        <div style="background:var(--mh-gray-900);color:var(--mh-text-on-brand);font:var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-en);padding:8px 14px;border-radius:var(--mh-radius-md);display:inline-block;margin-bottom:var(--mh-space-3);">DEMO — Email (EDM) the member receives after applying — not an auto-return</div>
+
+        <div class="edm">
+          <div class="edm__hero">
+            <img src="assets/moneyhero-logo-white.svg" alt="MoneyHero">
+            <div class="edm__gift">🎁</div>
+          </div>
+          <div class="edm__body">
+            <h2>多謝你對 WeLend 私人貸款 的 MoneyHero 獨家獎賞感興趣</h2>
+            <p class="edm__lead">你只需完成最後一步，即可換領你的獎賞，還在等什麼？</p>
+            <p><b>快點行動吧！</b></p>
+            <p class="edm__step"><b>步驟 1：</b>請透過 MoneyHero 提供的連結前往金融機構網站完成產品申請，以獲取你的專屬申請參考編號 (ARN)。</p>
+            <p class="edm__step"><b>步驟 2：</b>點擊「立即換領獎賞」，進入你的專屬獎賞換領表格。*</p>
+            <p class="edm__step"><b>步驟 3：</b>選擇你想要的獎賞，輸入你的 ARN 及其他所需資料並提交以換領獎賞！</p>
+            <p><a class="edm__link" href="#" onclick="return false;">如何查找你的專屬申請參考編號 (ARN)？</a></p>
+            <button class="edm__cta" id="edmClaim">填寫獎賞換領表格 →</button>
+            <p class="edm__fine">*請於申請後的 7 天內提交專屬獎賞換領表格，否則你可能無法獲得獎賞。</p>
+            <p class="edm__fine">請注意，只有經由 MoneyHero 網站指定連結提交的申請才符合獎賞兌換資格。</p>
+
+            <hr class="edm__divider">
+
+            <div class="edm__progress">
+              <div class="edm__mini">
+                <div class="mini-bar">獎賞中心 Account</div>
+                <div class="mini-body">您好 Hello，<br>🎁 我的獎賞 My Reward<br>登出 Log Out</div>
+              </div>
+              <div style="flex:1;min-width:180px;">
+                <p style="font:var(--mh-fw-bold) var(--mh-fs-title-2)/var(--mh-lh-title-2) var(--mh-font-zh);color:var(--mh-text-primary);margin-bottom:var(--mh-space-2);">如何查詢獎賞換領進度？</p>
+                <p class="edm__step" style="margin-bottom:4px;"><b>步驟 1：</b>用註冊的信箱登入。</p>
+                <p class="edm__step" style="margin-bottom:var(--mh-space-3);"><b>步驟 2：</b>點選「我的獎賞」來查詢進度。</p>
+                <button class="edm__loginbtn" id="edmLogin">登入</button>
+              </div>
+            </div>
+          </div>
+          <div class="edm__foot">
+            <img src="assets/moneyhero-logo-white.svg" alt="MoneyHero">
+            <p>Floor 22, East Exchange Tower, 38 Leighton Road, Causeway Bay, Hong Kong<br>© 2015 – 2026 MoneyHero Global Limited. All rights reserved.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: MY REWARDS (logged-in member area) ════════ -->
+    <section class="screen" id="screen-my-rewards">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-my-rewards"></div>
+
+        <div class="rewards-hero">
+          <div class="path-label">moneyhero.com.hk/user/account → 我的獎賞</div>
+          <h2>我的獎賞</h2>
+          <p>追蹤您的申請進度及換領狀態。</p>
+        </div>
+
+        <!-- Application progress strip -->
+        <div class="progress-strip">
+          <div class="progress-strip__label">申請進度</div>
+          <div class="progress-steps">
+            <div class="progress-step done"><span class="ps-icon">✓</span> 已提交申請</div>
+            <div class="progress-step done"><span class="ps-icon">✓</span> 機構已收到</div>
+            <div class="progress-step active"><span class="ps-icon">●</span> 審批中</div>
+            <div class="progress-step pending"><span class="ps-icon">○</span> 批核結果</div>
+            <div class="progress-step pending"><span class="ps-icon">○</span> 獎賞發放</div>
+          </div>
+        </div>
+
+        <!-- Claim card -->
+        <div class="claim-card">
+          <div class="claim-card__head">
+            <img class="claim-card__logo" src="assets/provider-logos/welend.webp" alt="WeLend">
+            <span class="claim-card__badge">待換領</span>
+          </div>
+          <div class="claim-card__title">WeLend 私人貸款 — 獎賞換領</div>
+          <div class="claim-card__sub">您有一份獎賞待換領。請填寫申請參考編號 (ARN) 及選擇獎賞，即可完成換領。</div>
+          <button class="btn btn--primary" id="claimCardBtn">回領申請獎賞 →</button>
+        </div>
+
+        <!-- Credit report CTA banner -->
+        <div class="cr-banner">
+          <div class="cr-banner__body">
+            <div class="cr-banner__eyebrow">了解貸款機構眼中的你</div>
+            <div class="cr-banner__title">你的信貸報告反映可能影響申請結果的因素</div>
+            <div class="cr-banner__sub">查閱您的免費信貸評估，掌握影響批核的關鍵因素。</div>
+          </div>
+          <button class="btn--cr">查閱我的信貸報告 →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: REDEMPTION (logged-in, streamlined) ════════ -->
+    <section class="screen" id="screen-redeem-in">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-redeem-in"></div>
+        <div class="panel">
+          <div class="form-head">
+            <img src="assets/provider-logos/welend.webp" alt="WeLend">
+            <h2>WeLend 私人貸款 — 獎賞換領表</h2>
+          </div>
+
+          <form id="formIn">
+            <div class="field">
+              <label>姓名</label>
+              <input type="text" value="Genevieve Gui" readonly class="locked">
+              <span class="prefill-note"><span class="lock-ic">🔒</span> 已從您的 CHC 帳戶自動帶入</span>
+            </div>
+            <div class="field">
+              <label>電郵</label>
+              <input type="email" value="genevieve.gui@example.com" readonly class="locked">
+              <span class="prefill-note"><span class="lock-ic">🔒</span> 已從您的 CHC 帳戶自動帶入</span>
+            </div>
+            <div class="field">
+              <label>電話</label>
+              <input type="tel" value="+852 9123 4567" readonly class="locked">
+              <span class="prefill-note"><span class="lock-ic">🔒</span> 已從您的 CHC 帳戶自動帶入</span>
+            </div>
+            <div class="field">
+              <label>申請參考編號 (ARN)</label>
+              <input type="text" id="arnIn" placeholder="請輸入申請參考編號" autocomplete="off">
+              <span class="prefill-note" style="color:var(--mh-text-muted)">請填寫 WeLend 確認電郵／短訊中的申請參考編號</span>
+            </div>
+            <div class="field">
+              <label>獎賞選擇</label>
+              <div class="radio-group">
+                <label class="radio-opt"><input type="radio" name="rewardIn" value="cash">HK$800 現金回贈</label>
+                <label class="radio-opt"><input type="radio" name="rewardIn" value="voucher">HK$1,000 超市禮券</label>
+                <label class="radio-opt"><input type="radio" name="rewardIn" value="airmiles">8,000 里數</label>
+              </div>
+            </div>
+            <button type="submit" class="btn btn--primary btn--block">提交換領</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: PROVIDER (logged-out) ════════ -->
+    <section class="screen" id="screen-provider-out">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-provider-out"></div>
+        <!-- Demo scaffolding label — not part of the simulated page -->
+        <div style="background:var(--mh-gray-900);color:var(--mh-text-on-brand);font:var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-en);padding:8px 14px;border-radius:var(--mh-radius-md) var(--mh-radius-md) 0 0;display:inline-block;margin-bottom:-1px;position:relative;z-index:1;">DEMO — This is WeLend's own application page (external site)</div>
+        <div class="provider-frame">
+          <div class="provider-urlbar"><span class="lock">🔒</span> https://apply.welend.com.hk/personal-loan</div>
+          <div class="provider-body">
+            <img src="assets/provider-logos/welend.webp" alt="WeLend">
+            <span class="ext-tag">WeLend — 貸款申請</span>
+            <h2>您已在 WeLend 完成申請</h2>
+          </div>
+        </div>
+        <!-- Demo nav affordance — NOT shown to a real user -->
+        <div style="border:1px dashed var(--mh-border-strong);background:var(--mh-bg-subtle);border-radius:var(--mh-radius-md);padding:var(--mh-space-4);margin-top:var(--mh-space-4);">
+          <span style="display:inline-block;font:var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);letter-spacing:.1em;background:var(--mh-gray-900);color:var(--mh-text-on-brand);padding:4px 8px;border-radius:var(--mh-radius-sm);margin-bottom:var(--mh-space-2);">DEMO NAVIGATION</span>
+          <p style="font:var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-en);color:var(--mh-text-secondary);margin-bottom:var(--mh-space-3);">Prototype only — in reality the user leaves WeLend's site and finds their own way back to MoneyHero. This button does not appear in the real journey.</p>
+          <button class="btn btn--ghost" id="providerOutBack">Continue to next step →</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: REWARD FORMS LIST (logged-out hunt) ════════ -->
+    <section class="screen" id="screen-rewardforms">
+      <!-- Blue hero — faithful to live page -->
+      <div style="background:var(--mh-primary-500);color:var(--mh-text-on-brand);padding:var(--mh-space-6) var(--mh-space-5);">
+        <div style="max-width:1216px;margin:0 auto;">
+          <div style="font:var(--mh-fw-bold) var(--mh-fs-display-1)/var(--mh-lh-display-1) var(--mh-font-zh);margin-bottom:var(--mh-space-2);">已完成申請？</div>
+          <div style="font:var(--mh-fw-bold) var(--mh-fs-title-1)/1.3 var(--mh-font-zh);margin-bottom:var(--mh-space-2);">馬上填表領取你的獎賞</div>
+          <div style="font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);opacity:.9;">申請後14日內請提交獎賞換領表格</div>
+        </div>
+      </div>
+      <div class="chc-section">
+        <div style="max-width:1216px;margin:0 auto;">
+        <div class="stepper" id="stepper-rewardforms"></div>
+
+        <!-- Category anchor links -->
+        <div style="margin-bottom:var(--mh-space-4);font:var(--mh-fw-medium) var(--mh-fs-body-2)/1 var(--mh-font-zh);color:var(--mh-text-secondary);">
+          由下方選擇你申請的產品類別：<br><br>
+          <a href="#rf-cat-invest" style="color:var(--mh-primary-500);margin-right:var(--mh-space-4);">→ 投資戶口</a>
+          <a href="#rf-cat-loan" style="color:var(--mh-primary-500);margin-right:var(--mh-space-4);">→ 私人貸款</a>
+          <a href="#rf-cat-bank" style="color:var(--mh-primary-500);">→ 銀行戶口</a>
+        </div>
+        <p style="font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);color:var(--mh-text-secondary);margin-bottom:var(--mh-space-4);">然後選擇提交月份對應的申請月份，並填寫你的申請資料。如對獎賞有任何查詢，歡迎聯絡相關金融機構。</p>
+
+        <div class="rf-search">
+          <input type="text" id="rfSearch" placeholder="搜尋機構或產品…" autocomplete="off">
+        </div>
+        <div id="rfList"><!-- JS fills --></div>
+        <div class="rf-empty" id="rfEmpty">找不到相符的表格。請嘗試其他關鍵字。</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: REDEMPTION (logged-out, manual) ════════ -->
+    <section class="screen" id="screen-redeem-out">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-redeem-out"></div>
+        <div class="panel" style="max-width:640px;margin-left:auto;margin-right:auto;">
+          <!-- Form header faithful to live form -->
+          <div style="text-align:center;margin-bottom:var(--mh-space-5);">
+            <img src="assets/moneyhero-logo.svg" alt="MoneyHero" style="height:22px;width:auto;margin:0 auto var(--mh-space-3);">
+            <h2 style="font:var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh);">獎賞換領表格</h2>
+          </div>
+
+          <form id="formOut">
+            <div class="field">
+              <label>獎賞選擇</label>
+              <select id="rewardSelectOut" style="width:100%;padding:12px 14px;font:var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);border:1px solid var(--mh-border-strong);border-radius:var(--mh-radius-md);background:var(--mh-bg-page);">
+                <option value="">請選擇獎賞</option>
+                <option value="welend-btc">HK$500 惠康購物現金券 + 1,888 HKD等值BTC</option>
+                <option value="welend-cash">HK$800 現金回贈</option>
+                <option value="welend-miles">8,000 Asia Miles</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>電郵地址</label>
+              <input type="email" id="emailOut" placeholder="gen.is.testing@gmail.com" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>你的英文姓名（如身份證上所示）</label>
+              <input type="text" id="nameOut" placeholder="請輸入英文姓名" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>手提電話號碼</label>
+              <input type="tel" id="phoneOut" placeholder="91234567" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>獎賞領取地點 <span style="font-size:var(--mh-fs-caption);color:var(--mh-text-muted);">ⓘ</span></label>
+              <select id="pickupOut" style="width:100%;padding:12px 14px;font:var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);border:1px solid var(--mh-border-strong);border-radius:var(--mh-radius-md);background:var(--mh-bg-page);">
+                <option value="">請選擇領取地點</option>
+                <option value="causeway-bay">家家換領中心、銅鑼灣</option>
+                <option value="mongkok">家家換領中心、旺角</option>
+                <option value="kwuntong">家家換領中心、觀塘</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>申請日期</label>
+              <input type="date" id="dateOut">
+            </div>
+            <div class="field">
+              <label>住址</label>
+              <input type="text" id="addressOut" placeholder="請輸入住址" autocomplete="off">
+            </div>
+            <!-- Consent checkboxes -->
+            <div style="margin-bottom:var(--mh-space-4);display:flex;flex-direction:column;gap:var(--mh-space-3);">
+              <label style="display:flex;align-items:flex-start;gap:var(--mh-space-2);font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);cursor:pointer;">
+                <input type="checkbox" checked style="margin-top:3px;accent-color:var(--mh-primary-500);flex-shrink:0;">
+                我同意 MoneyHero <a href="#" style="color:var(--mh-primary-500);">條款及細則</a>和<a href="#" style="color:var(--mh-primary-500);">私隱政策</a>
+              </label>
+              <label style="display:flex;align-items:flex-start;gap:var(--mh-space-2);font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);cursor:pointer;">
+                <input type="checkbox" checked style="margin-top:3px;accent-color:var(--mh-primary-500);flex-shrink:0;">
+                我同意接收 MoneyHero 的推廣訊息
+              </label>
+              <label style="display:flex;align-items:flex-start;gap:var(--mh-space-2);font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);cursor:pointer;">
+                <input type="checkbox" checked style="margin-top:3px;accent-color:var(--mh-primary-500);flex-shrink:0;">
+                本人確認獎賞需時至少16星期處理，並接受相關安排
+              </label>
+            </div>
+            <button type="submit" class="btn btn--primary btn--block">確認</button>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: SUCCESS ════════ -->
+    <section class="screen" id="screen-success">
+      <div class="chc-section">
+        <div class="stepper" id="stepper-success"></div>
+        <!-- Success card — faithful to FigJam completion page -->
+        <div style="max-width:480px;margin:0 auto;background:var(--mh-bg-page);border-radius:var(--mh-radius-lg);box-shadow:var(--mh-shadow-block);overflow:hidden;">
+          <!-- Card body -->
+          <div style="padding:var(--mh-space-6) var(--mh-space-5);text-align:center;">
+            <!-- MoneyHero logo -->
+            <img src="assets/moneyhero-logo.svg" alt="MoneyHero" style="height:22px;width:auto;margin:0 auto var(--mh-space-5);">
+            <!-- Gift box visual -->
+            <div style="width:100px;height:100px;border-radius:var(--mh-radius-full);background:var(--mh-primary-50);border:3px solid var(--mh-primary-200);display:flex;align-items:center;justify-content:center;font-size:50px;margin:0 auto var(--mh-space-5);">🎁</div>
+            <!-- Confirmation line -->
+            <p style="font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh);color:var(--mh-text-secondary);max-width:36ch;margin:0 auto var(--mh-space-5);">你的獎賞換領表格已成功提交。我們會盡快為你處理，你亦會收到確認電郵。</p>
+            <!-- Disclaimer -->
+            <p style="font:var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-zh);color:var(--mh-text-muted);max-width:42ch;margin:0 auto;">*獎賞時間或會因業務進度而有變動，本公司承諾所有合乎申請資格的客戶均會收到獎賞。如有任何爭議，MoneyHero 及相關機構保留最終決定權。</p>
+          </div>
+          <!-- Navy footer band inside the card — faithful to FigJam reference -->
+          <div style="background:var(--mh-primary-700);padding:var(--mh-space-4) var(--mh-space-5);display:flex;align-items:center;justify-content:center;">
+            <img src="assets/moneyhero-logo-white.svg" alt="MoneyHero" style="height:18px;width:auto;">
+          </div>
+        </div>
+
+        <!-- Demo scaffolding nav — clearly separated -->
+        <div style="margin-top:var(--mh-space-6);padding-top:var(--mh-space-4);border-top:2px dashed var(--mh-border-strong);">
+          <p style="font:var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-en);color:var(--mh-text-muted);text-align:center;margin-bottom:var(--mh-space-3);">DEMO NAVIGATION</p>
+          <div class="nav-row" style="justify-content:center;">
+            <button class="btn btn--brand" id="successCompare">View journey comparison</button>
+            <button class="btn btn--outline" id="successRestart">Restart</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ════════ SCREEN: JOURNEY COMPARISON ════════ -->
+    <section class="screen" id="screen-compare">
+      <div class="chc-section">
+        <h1 class="h-page">Journey comparison: Logged in vs Logged out</h1>
+        <p class="sub-page">Same reward, two very different journeys. Login (Approval Odds) saves members several steps — no hunting, auto pre-fill, and a direct path to "My Rewards" to complete the claim.</p>
+
+        <div class="cmp-grid">
+          <div class="cmp-col in">
+            <h3>Logged-in member</h3>
+            <div class="cmp-count">5 <small>key steps</small></div>
+            <ol class="cmp-steps">
+              <li>See Approval Odds on the listing → Apply Now</li>
+              <li>Apply on WeLend's site (external)</li>
+              <li>Receive a MoneyHero reward email (EDM) → log in</li>
+              <li>"My Rewards" — application progress + claim card</li>
+              <li>Form pre-filled; enter ARN + pick reward → done</li>
+            </ol>
+            <div class="cmp-key">
+              <b>Guided by email, correct form surfaced in "My Rewards", contact details pre-filled</b>
+              <span>Because the member is logged in, MoneyHero recognises them — no hunting, and name / email / phone are auto-filled and locked.</span>
+            </div>
+          </div>
+          <div class="cmp-col out">
+            <h3>Logged-out user</h3>
+            <div class="cmp-count">6 <small>key steps</small></div>
+            <ol class="cmp-steps">
+              <li>Approval Odds locked → Apply Now</li>
+              <li>Sent straight to the provider page (no return button)</li>
+              <li>Manually navigate back to the MoneyHero listing</li>
+              <li>Scroll down to find the reward section → Fill form</li>
+              <li>Hunt for the WeLend form in a long list</li>
+              <li>Fill all fields by hand — system does not recognise the user → done</li>
+            </ol>
+            <div class="cmp-key">
+              <b>Manual navigation back, hunt for the right form, all fields filled by hand with no pre-fill</b>
+              <span>System does not recognise the user — all details must be re-entered; high drop-off risk.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="intro-actions">
+          <button class="btn btn--brand" id="compareTryIn">Walk through as logged-in</button>
+          <button class="btn btn--outline" id="compareTryOut">Walk through as logged-out</button>
+          <button class="btn btn--ghost" id="compareIntro">Back to overview</button>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <footer class="chc-footer">
+    © 2026 MoneyHero Group · Personal Loan Journey Demo Prototype · 服務條款 · 私隱政策
+  </footer>
+</div>
+
+<script>
+/* ══════════ PASSWORD GATE ══════════ */
+(function () {
+  var PW = 'chc-moneyhero';
+  var KEY = 'chc_pl_journey_unlocked';
+  var gate = document.getElementById('gate');
+  var app  = document.getElementById('app');
+  function unlock() { gate.classList.add('hidden'); app.style.display = 'block'; init(); }
+  if (sessionStorage.getItem(KEY) === 'yes') { unlock(); }
+  function tryPw() {
+    var v = document.getElementById('gatePw').value;
+    if (v === PW) { sessionStorage.setItem(KEY, 'yes'); unlock(); }
+    else { document.getElementById('gateErr').textContent = 'Incorrect password — please try again.'; }
+  }
+  document.getElementById('gateBtn').addEventListener('click', tryPw);
+  document.getElementById('gatePw').addEventListener('keydown', function (e) { if (e.key === 'Enter') tryPw(); });
+})();
+
+/* ══════════ STATE MACHINE ══════════ */
+var loginState = 'in'; // 'in' | 'out'
+var loginReturnScreen = 'screen-listing'; // where to go after login
+
+/* Loan card data — columns per live site */
+var LOANS = [
+  { logo: 'welend.webp',  name: 'WeLend 私人貸款',     apr: '1.18%', rewardVal: 'HK$500 惠康現金券 + 1,888 HKD等值BTC', repay: 'HK$4,250', interest: 'HK$2,000', odds: 'high' },
+  { logo: 'citi.webp',    name: 'Citi 特快現金貸款',   apr: '1.55%', rewardVal: 'HK$2,000 超市禮券',                   repay: 'HK$4,560', interest: 'HK$3,360', odds: 'mid'  },
+  { logo: 'i-money.webp', name: 'UA i-Money 私人貸款', apr: '2.10%', rewardVal: 'HK$1,500 現金回贈',                   repay: 'HK$4,820', interest: 'HK$4,840', odds: 'high' },
+  { logo: 'crefit.webp',  name: 'CreFIT 私人貸款',     apr: '2.88%', rewardVal: 'HK$1,000 現金回贈',                   repay: 'HK$5,010', interest: 'HK$6,060', odds: 'mid'  }
+];
+
+/* Reward-forms list data (logged-out hunt) */
+var RF_DATA = [
+  { cat: '投資戶口', anchorId: 'rf-cat-invest', rows: [
+    { inst: 'DSL 富途牛牛',         period: '2026/01–2026/06', reward: 'HK$500 Apple Store 禮品卡 + HK$488 實物 / 7,200 Max Miles 飛行里數' },
+    { inst: 'uSMART 盈立證券',      period: '2026/02–2026/07', reward: '比較優惠，領取現金回贈' },
+    { inst: 'Hashkey Exchange',    period: '2026/01–2026/06', reward: 'HK$100 加密貨幣' },
+    { inst: 'Tiger Brokers 老虎',   period: '2026/03–2026/08', reward: 'HK$600 現金回贈' },
+    { inst: '盈寶股票通 uSMART',    period: '2026/02–2026/07', reward: '迎新股票禮' }
+  ]},
+  { cat: '私人貸款', anchorId: 'rf-cat-loan', rows: [
+    { inst: 'Citi 特快現金貸款',    period: '2026/01–2026/12', reward: 'HK$2,000 超市券' },
+    { inst: 'UA i-Money 私人貸款',  period: '2026/01–2026/12', reward: 'HK$1,500 現金回贈' },
+    { inst: 'WeLend 私人貸款',      period: '2026/01–2026/12', reward: 'HK$500 惠康購物現金券 + 1,888 HKD等值BTC', target: true },
+    { inst: 'CreFIT 私人貸款',      period: '2026/02–2026/11', reward: 'HK$1,000 現金回贈' },
+    { inst: 'Promise 邦民日本財務',  period: '2026/01–2026/09', reward: 'HK$800 現金' }
+  ]},
+  { cat: '銀行戶口', anchorId: 'rf-cat-bank', rows: [
+    { inst: 'Mox Bank',            period: '2026/01–2026/06', reward: 'HK$300 現金回贈' },
+    { inst: 'ZA Bank',             period: '2026/02–2026/07', reward: 'HK$250 現金回贈' },
+    { inst: 'WeLab Bank',          period: '2026/03–2026/08', reward: 'HK$400 現金回贈' },
+    { inst: 'Dah Sing 大新銀行',    period: '2026/01–2026/10', reward: 'HK$500 禮品券' }
+  ]}
+];
+
+/* Step definitions per journey */
+var STEPS_IN  = ['Listing', 'WeLend', 'Reward email', 'My Rewards', 'Claim form', 'Done'];
+var STEPS_OUT = ['Listing', 'Provider', 'Navigate back', 'Find form', 'Claim form', 'Done'];
+
+/* Map each screen to a step index per journey (or null if not in journey) */
+var SCREEN_STEP = {
+  'screen-listing':       { in: 0, out: 0 },
+  'screen-interstitial':  { in: null, out: null },
+  'screen-provider-in':   { in: 1, out: null },
+  'screen-provider-out':  { in: null, out: 1 },
+  'screen-edm':           { in: 2, out: null },
+  'screen-my-rewards':    { in: 3, out: null },
+  'screen-rewardforms':   { in: null, out: 3 },
+  'screen-redeem-in':     { in: 4, out: null },
+  'screen-redeem-out':    { in: null, out: 4 },
+  'screen-success':       { in: 5, out: 5 },
+  'screen-login':         { in: null, out: null }
+};
+
+/* Which screen each step index leads to (for clickable step dots) */
+var STEP_NAV_IN  = ['screen-listing','screen-provider-in','screen-edm','screen-my-rewards','screen-redeem-in','screen-success'];
+var STEP_NAV_OUT = ['screen-listing','screen-provider-out','__rewardsection__','screen-rewardforms','screen-redeem-out','screen-success'];
+function goStep(i) {
+  var t = (loginState === 'in' ? STEP_NAV_IN : STEP_NAV_OUT)[i];
+  if (!t) return;
+  if (t === '__rewardsection__') { gotoRewardSection(); return; }
+  show(t);
+}
+
+function $(id) { return document.getElementById(id); }
+function $$(sel) { return Array.prototype.slice.call(document.querySelectorAll(sel)); }
+
+function show(screenId) {
+  $$('.screen').forEach(function (s) { s.classList.remove('active'); });
+  var el = $(screenId);
+  if (el) { el.classList.add('active'); }
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  renderStepper(screenId);
+}
+
+/* ── Step indicator ── */
+function renderStepper(screenId) {
+  var map = SCREEN_STEP[screenId];
+  var stepperEl = $('stepper-' + screenId.replace('screen-', ''));
+  if (!stepperEl || !map) return;
+  var steps = loginState === 'in' ? STEPS_IN : STEPS_OUT;
+  var current = map[loginState];
+  if (current === null || current === undefined) { stepperEl.innerHTML = ''; return; }
+  var label = loginState === 'in' ? 'Logged-in journey' : 'Logged-out journey';
+  var html = '<span class="stepper__title">' + label + ' (' + steps.length + ' steps · click a step)</span>';
+  steps.forEach(function (s, i) {
+    var cls = 'stepper__dot';
+    if (i < current) cls += ' done';
+    else if (i === current) cls += ' current';
+    html += '<span class="' + cls + '" title="' + (i + 1) + '. ' + s + '" role="button" tabindex="0" onclick="goStep(' + i + ')" onkeydown="if(event.key===\'Enter\'||event.key===\' \'){event.preventDefault();goStep(' + i + ')}">' + (i + 1) + '</span>';
+    if (i < steps.length - 1) html += '<span class="stepper__line"></span>';
+  });
+  stepperEl.innerHTML = html;
+}
+
+/* ── Header (member greeting vs login button) ── */
+function renderHeader() {
+  var el = $('headerRight');
+  if (loginState === 'in') {
+    el.innerHTML =
+      '<div class="chc-header__member">' +
+        '<span class="name">Hi, Genevieve</span>' +
+        '<span class="chc-header__avatar">G</span>' +
+      '</div>';
+  } else {
+    el.innerHTML = '<a href="#" class="chc-header__action" id="headerLogin">登入</a>';
+    var lg = $('headerLogin');
+    if (lg) lg.addEventListener('click', function (e) {
+      e.preventDefault();
+      loginReturnScreen = 'screen-listing';
+      show('screen-login');
+    });
+  }
+}
+
+/* ── Loan cards ── */
+function renderLoans() {
+  var wrap = $('loanCards');
+  wrap.innerHTML = '';
+  LOANS.forEach(function (loan, idx) {
+    var card = document.createElement('div');
+    card.className = 'loan-card';
+    var oddsHtml;
+    if (loginState === 'in') {
+      var oddsCls = loan.odds === 'high' ? 'odds--high' : 'odds--mid';
+      var oddsTxt = loan.odds === 'high' ? '您的批核機會：高 ✓' : '您的批核機會：中';
+      oddsHtml = '<div class="odds ' + oddsCls + '"><span class="odds__dot"></span>' + oddsTxt + '</div>';
+    } else {
+      oddsHtml =
+        '<div class="odds odds--locked" data-login>' +
+          '<div class="odds__masked"><span class="odds__dot"></span>您的批核機會：高 ✓</div>' +
+          '<div class="odds__overlay">🔒 登入查看您的批核機會</div>' +
+        '</div>';
+    }
+    card.innerHTML =
+      '<div class="loan-card__head">' +
+        '<img class="loan-card__logo" src="assets/provider-logos/' + loan.logo + '" alt="' + loan.name + '">' +
+        '<div class="loan-card__name">' + loan.name + '</div>' +
+      '</div>' +
+      oddsHtml +
+      '<div class="loan-card__metrics">' +
+        '<div class="metric"><div class="k">最低實際年利率</div><div class="v">' + loan.apr + '</div></div>' +
+        '<div class="metric"><div class="k">MoneyHero獎賞價值</div><div class="v reward-metric">' + loan.rewardVal + '</div></div>' +
+        '<div class="metric"><div class="k">每月還款額低至</div><div class="v">' + loan.repay + '</div></div>' +
+        '<div class="metric"><div class="k">總利息低至</div><div class="v">' + loan.interest + '</div></div>' +
+      '</div>' +
+      '<button class="btn btn--primary btn--apply" data-apply="' + idx + '">立即申請</button>';
+    wrap.appendChild(card);
+  });
+  // Wire CTAs
+  $$('[data-apply]').forEach(function (b) {
+    b.addEventListener('click', function () { applyLoan(); });
+  });
+  $$('.odds--locked[data-login]').forEach(function (o) {
+    o.addEventListener('click', function () {
+      loginReturnScreen = 'screen-listing';
+      show('screen-login');
+    });
+  });
+}
+
+/* ── Apply action branches on login state ── */
+function applyLoan() {
+  if (loginState === 'in') {
+    show('screen-interstitial');
+    setTimeout(function () {
+      if ($('screen-interstitial').classList.contains('active')) {
+        show('screen-provider-in');
+      }
+    }, 1800);
+  } else {
+    show('screen-provider-out');
+  }
+}
+
+/* ── Reward-forms list (logged-out hunt) ── */
+function renderRewardForms() {
+  var wrap = $('rfList');
+  wrap.innerHTML = '';
+  RF_DATA.forEach(function (group) {
+    var cat = document.createElement('div');
+    cat.className = 'rf-cat';
+    cat.setAttribute('data-cat', group.cat);
+    var html =
+      '<div class="rf-cat__title rf-cat__anchor" id="' + group.anchorId + '">' + group.cat + '</div>' +
+      '<table class="rf-table">' +
+        '<thead><tr>' +
+          '<th>產品名稱</th>' +
+          '<th>推廣期</th>' +
+          '<th>獨家獎賞</th>' +
+          '<th></th>' +
+        '</tr></thead>' +
+        '<tbody>';
+    group.rows.forEach(function (r) {
+      html +=
+        '<tr data-inst="' + r.inst + '" class="' + (r.target ? 'rf-row-target' : '') + '">' +
+          '<td>' + r.inst + '</td>' +
+          '<td>' + r.period + '</td>' +
+          '<td>' + r.reward + '</td>' +
+          '<td><button class="rf-row__submit" data-rf-submit="1">提交</button></td>' +
+        '</tr>';
+    });
+    html += '</tbody></table>';
+    cat.innerHTML = html;
+    wrap.appendChild(cat);
+  });
+  // Wire submit links — all 提交 buttons navigate to redemption form
+  $$('[data-rf-submit]').forEach(function (b) {
+    b.addEventListener('click', function () {
+      show('screen-redeem-out');
+    });
+  });
+  // Search filter
+  var search = $('rfSearch');
+  search.value = '';
+  search.oninput = function () {
+    var q = search.value.trim().toLowerCase();
+    var anyVisible = false;
+    $$('.rf-cat').forEach(function (catEl) {
+      var catVisibleRows = 0;
+      catEl.querySelectorAll('tr[data-inst]').forEach(function (row) {
+        var inst = row.getAttribute('data-inst').toLowerCase();
+        var match = q === '' || inst.indexOf(q) !== -1;
+        row.style.display = match ? '' : 'none';
+        if (match) { catVisibleRows++; anyVisible = true; }
+      });
+      catEl.style.display = catVisibleRows > 0 ? '' : 'none';
+    });
+    $('rfEmpty').style.display = anyVisible ? 'none' : 'block';
+  };
+}
+
+/* ── Login state switch (resets to listing) ── */
+function setLoginState(state) {
+  loginState = state;
+  $$('#loginToggle button').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-state') === state);
+  });
+  renderHeader();
+  renderLoans();
+  updateListingSub();
+  updateSuccessNote();
+  show('screen-listing');
+}
+
+/* ── Complete login (from login screen) ── */
+function completeLogin() {
+  loginState = 'in';
+  $$('#loginToggle button').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-state') === 'in');
+  });
+  renderHeader();
+  renderLoans();
+  updateListingSub();
+  updateSuccessNote();
+  show(loginReturnScreen);
+}
+
+function updateListingSub() {
+  $('listingSub').textContent = loginState === 'in'
+    ? '[Logged in] Approval Odds shown directly on cards — streamlined reward redemption after applying.'
+    : '[Logged out] Approval Odds locked. Log in to unlock them and access the streamlined reward flow.';
+}
+function updateSuccessNote() {
+  /* member-note element removed in Revision 3 — no-op */
+}
+
+/* ── Scroll to reward section (logged-out re-find) ── */
+function gotoRewardSection() {
+  show('screen-listing');
+  setTimeout(function () {
+    var sec = $('rewardSection');
+    sec.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    sec.classList.add('pulse');
+    setTimeout(function () { sec.classList.remove('pulse'); }, 3000);
+  }, 60);
+}
+
+/* ── Submit handlers ── */
+function bindForms() {
+  $('formIn').addEventListener('submit', function (e) {
+    e.preventDefault();
+    if (!$('arnIn').value.trim()) { $('arnIn').focus(); $('arnIn').style.borderColor = 'var(--mh-secondary-900)'; return; }
+    if (!document.querySelector('input[name="rewardIn"]:checked')) { alert('請選擇您的獎賞。'); return; }
+    show('screen-success');
+  });
+  $('formOut').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var required = ['rewardSelectOut','emailOut','nameOut','phoneOut','pickupOut','dateOut','addressOut'];
+    for (var i = 0; i < required.length; i++) {
+      var f = $(required[i]);
+      if (!f.value.trim()) {
+        f.focus();
+        f.style.borderColor = 'var(--mh-secondary-900)';
+        return;
+      }
+    }
+    show('screen-success');
+  });
+}
+
+/* ══════════ INIT / WIRING ══════════ */
+function init() {
+  renderRewardForms();
+  bindForms();
+
+  // Demo bar
+  $$('#loginToggle button').forEach(function (b) {
+    b.addEventListener('click', function () { setLoginState(b.getAttribute('data-state')); });
+  });
+  $('goIntro').addEventListener('click', function () { show('screen-intro'); });
+  $('goCompare').addEventListener('click', function () { show('screen-compare'); });
+
+  // Header home -> listing
+  $('headerHome').addEventListener('click', function (e) { e.preventDefault(); show('screen-listing'); });
+
+  // Intro
+  $('introStart').addEventListener('click', function () { show('screen-listing'); });
+  $('introCompare').addEventListener('click', function () { show('screen-compare'); });
+
+  // Login screen
+  $('loginGoogle').addEventListener('click', function () { completeLogin(); });
+  $('loginMH').addEventListener('click', function () { completeLogin(); });
+  $('loginCancel').addEventListener('click', function () { show('screen-listing'); });
+  // Listing reward section button
+  $('rewardSectionBtn').addEventListener('click', function () {
+    if (loginState === 'in') {
+      show('screen-my-rewards');
+    } else {
+      show('screen-rewardforms');
+    }
+  });
+
+  // Logged-in provider (WeLend) → reward email (EDM), NOT an auto-return
+  $('providerInReturn').addEventListener('click', function () { show('screen-edm'); });
+
+  // Reward email (EDM) CTAs → log in to MoneyHero → My Rewards
+  $('edmClaim').addEventListener('click', function () { show('screen-my-rewards'); });
+  $('edmLogin').addEventListener('click', function () { show('screen-my-rewards'); });
+
+  // My Rewards claim card → prefilled form
+  $('claimCardBtn').addEventListener('click', function () { show('screen-redeem-in'); });
+
+  // Logged-out provider back (re-find page)
+  $('providerOutBack').addEventListener('click', function () { gotoRewardSection(); });
+
+  // Success
+  $('successCompare').addEventListener('click', function () { show('screen-compare'); });
+  $('successRestart').addEventListener('click', function () { setLoginState(loginState); });
+
+  // Compare screen actions
+  $('compareTryIn').addEventListener('click', function () { setLoginState('in'); });
+  $('compareTryOut').addEventListener('click', function () { setLoginState('out'); });
+  $('compareIntro').addEventListener('click', function () { show('screen-intro'); });
+
+  // Default state
+  loginState = 'in';
+  $$('#loginToggle button').forEach(function (b) {
+    b.classList.toggle('active', b.getAttribute('data-state') === 'in');
+  });
+  renderHeader();
+  renderLoans();
+  updateListingSub();
+  updateSuccessNote();
+  show('screen-listing');
+}
+</script>
+</body>
+</html>
