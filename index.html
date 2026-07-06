@@ -298,6 +298,21 @@
   .edm__foot p { font: var(--mh-fw-medium) var(--mh-fs-caption)/var(--mh-lh-caption) var(--mh-font-en); opacity: .85; }
   .edm__loginbtn { background: var(--mh-primary-500); color: var(--mh-text-on-brand); border: none; border-radius: var(--mh-radius-md); padding: 10px 20px; font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh); cursor: pointer; }
 
+  /* ─── CONSENT ROWS ───────────────────────────────────────── */
+  .consent-opt { display: flex; align-items: flex-start; gap: var(--mh-space-2); font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-zh); cursor: pointer; }
+  .consent-opt input { margin-top: 3px; accent-color: var(--mh-primary-500); flex-shrink: 0; }
+  .consent-opt a { color: var(--mh-primary-500); }
+
+  /* ─── FUTURE ENHANCEMENT (clearly separated, NOT this ticket) ── */
+  .future-enh { max-width: 640px; margin: var(--mh-space-6) auto 0; border: 2px dashed var(--mh-primary-500); border-radius: var(--mh-radius-lg); background: var(--mh-primary-50); padding: var(--mh-space-5); }
+  .future-enh__tag { display: inline-block; font: var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en); letter-spacing: .06em; background: var(--mh-primary-500); color: var(--mh-text-on-brand); padding: 5px 10px; border-radius: var(--mh-radius-pill); margin-bottom: var(--mh-space-3); }
+  .future-enh__desc { font: var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-en); color: var(--mh-text-secondary); margin-bottom: var(--mh-space-4); }
+  .future-enh__preview { background: var(--mh-bg-page); border: 1px solid var(--mh-border-default); border-radius: var(--mh-radius-md); padding: var(--mh-space-4); display: flex; flex-direction: column; gap: var(--mh-space-3); opacity: .9; }
+  .fe-field { display: flex; flex-direction: column; gap: 4px; }
+  .fe-label { font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh); color: var(--mh-text-muted); }
+  .fe-val { font: var(--mh-fw-medium) var(--mh-fs-body-2)/1.4 var(--mh-font-zh); color: var(--mh-text-secondary); }
+  .fe-lock { font: var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-zh); color: var(--seedly-secondary-700); }
+
   /* ─── LOAN CARDS ──────────────────────────────────────────── */
   .listing-intro { margin-bottom: var(--mh-space-5); }
   .cards { display: grid; grid-template-columns: 1fr; gap: var(--mh-space-4); }
@@ -1020,7 +1035,7 @@
             <span class="claim-card__badge">待換領</span>
           </div>
           <div class="claim-card__title">WeLend 私人貸款 — 獎賞換領</div>
-          <div class="claim-card__sub">您有一份獎賞待換領。請填寫申請參考編號 (ARN) 及選擇獎賞，即可完成換領。</div>
+          <div class="claim-card__sub">您有一份獎賞待換領。按此填寫獎賞換領表格即可完成換領。</div>
           <button class="btn btn--primary" id="claimCardBtn">回領申請獎賞 →</button>
         </div>
 
@@ -1040,43 +1055,59 @@
     <section class="screen" id="screen-redeem-in">
       <div class="chc-section">
         <div class="stepper" id="stepper-redeem-in"></div>
-        <div class="panel">
-          <div class="form-head">
-            <img src="assets/provider-logos/welend.webp" alt="WeLend">
-            <h2>WeLend 私人貸款 — 獎賞換領表</h2>
+
+        <!-- TICKET SCOPE: standard empty redemption form, faithful to the live form-rewards.moneyhero.com.hk page -->
+        <div class="panel" style="max-width:640px;margin-left:auto;margin-right:auto;">
+          <div style="text-align:center;margin-bottom:var(--mh-space-5);">
+            <img src="assets/moneyhero-logo.svg" alt="MoneyHero" style="height:22px;width:auto;margin:0 auto var(--mh-space-3);">
+            <h2 style="font:var(--mh-fw-bold) var(--mh-fs-title-1)/var(--mh-lh-title-1) var(--mh-font-zh);color:var(--mh-primary-500);">獎賞換領表格</h2>
           </div>
 
           <form id="formIn">
             <div class="field">
-              <label>姓名</label>
-              <input type="text" value="Genevieve Gui" readonly class="locked">
-              <span class="prefill-note"><span class="lock-ic">🔒</span> 已從您的 CHC 帳戶自動帶入</span>
-            </div>
-            <div class="field">
-              <label>電郵</label>
-              <input type="email" value="genevieve.gui@example.com" readonly class="locked">
-              <span class="prefill-note"><span class="lock-ic">🔒</span> 已從您的 CHC 帳戶自動帶入</span>
-            </div>
-            <div class="field">
-              <label>電話</label>
-              <input type="tel" value="+852 9123 4567" readonly class="locked">
-              <span class="prefill-note"><span class="lock-ic">🔒</span> 已從您的 CHC 帳戶自動帶入</span>
-            </div>
-            <div class="field">
-              <label>申請參考編號 (ARN)</label>
-              <input type="text" id="arnIn" placeholder="請輸入申請參考編號" autocomplete="off">
-              <span class="prefill-note" style="color:var(--mh-text-muted)">請填寫 WeLend 確認電郵／短訊中的申請參考編號</span>
-            </div>
-            <div class="field">
               <label>獎賞選擇</label>
-              <div class="radio-group">
-                <label class="radio-opt"><input type="radio" name="rewardIn" value="cash">HK$800 現金回贈</label>
-                <label class="radio-opt"><input type="radio" name="rewardIn" value="voucher">HK$1,000 超市禮券</label>
-                <label class="radio-opt"><input type="radio" name="rewardIn" value="airmiles">8,000 里數</label>
-              </div>
+              <select id="rewardSelectIn" style="width:100%;padding:12px 14px;font:var(--mh-fw-medium) var(--mh-fs-form-input)/1.3 var(--mh-font-zh);border:1px solid var(--mh-border-strong);border-radius:var(--mh-radius-md);background:var(--mh-bg-page);">
+                <option value="">- 選擇首選獎勵 -</option>
+                <option value="welend-btc">HK$500 惠康購物現金券 + 1,888 HKD等值BTC</option>
+                <option value="welend-cash">HK$800 現金回贈</option>
+                <option value="welend-voucher">HK$1,000 超市禮券</option>
+                <option value="welend-miles">8,000 Asia Miles</option>
+              </select>
             </div>
-            <button type="submit" class="btn btn--primary btn--block">提交換領</button>
+            <div class="field">
+              <label>電郵地址</label>
+              <input type="email" id="emailIn" placeholder="e.g: jhonnydee@gmail.com" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>你的英文姓名（如身份證上所示）</label>
+              <input type="text" id="nameIn" placeholder="e.g: Chan Tai Man" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>手提電話號碼</label>
+              <input type="tel" id="phoneIn" placeholder="e.g: 9876 5432" autocomplete="off">
+            </div>
+            <div class="field">
+              <label>申請日期</label>
+              <input type="date" id="dateIn" placeholder="DD/MM/YYYY">
+            </div>
+            <div style="margin-bottom:var(--mh-space-4);display:flex;flex-direction:column;gap:var(--mh-space-3);">
+              <label class="consent-opt"><input type="checkbox" id="c1In">我同意MoneyHero及其關聯公司之<a href="#" onclick="return false;">條款及細則</a>和<a href="#" onclick="return false;">個人私隱政策</a>。</label>
+              <label class="consent-opt"><input type="checkbox" id="c2In">我同意以電話、電郵或其它電子方式接收MoneyHero與其關聯公司提供的直接行銷資料如有關其產品與服務的電子通訊、推廣資訊及營銷活動。</label>
+              <label class="consent-opt"><input type="checkbox" id="c3In">我確認知悉換領流程由推廣期結束後起計需時至少16星期或根據相關活動條款及細則列明的換領流程為準。所需時間或會因批核、簽賬及其他實際情況變動。</label>
+            </div>
+            <button type="submit" class="btn btn--primary btn--block">確認</button>
           </form>
+        </div>
+
+        <!-- CLEARLY SEPARATED: potential future enhancement — NOT part of this ticket -->
+        <div class="future-enh">
+          <span class="future-enh__tag">🔮 POTENTIAL FUTURE ENHANCEMENT · NOT PART OF THIS TICKET</span>
+          <p class="future-enh__desc">This ticket delivers the standard empty form above — the same form everyone fills in today. Separately (for a later iteration): because a logged-in CHC member is already identified, MoneyHero could auto-fill and lock their contact details so they only pick a reward and add their application info — reducing drop-off. Illustrative preview only, not built in this ticket:</p>
+          <div class="future-enh__preview">
+            <div class="fe-field"><span class="fe-label">姓名</span><span class="fe-val">Genevieve Gui <span class="fe-lock">🔒 已從您的 CHC 帳戶自動帶入</span></span></div>
+            <div class="fe-field"><span class="fe-label">電郵地址</span><span class="fe-val">genevieve.gui@example.com <span class="fe-lock">🔒 已從您的 CHC 帳戶自動帶入</span></span></div>
+            <div class="fe-field"><span class="fe-label">手提電話號碼</span><span class="fe-val">+852 9123 4567 <span class="fe-lock">🔒 已從您的 CHC 帳戶自動帶入</span></span></div>
+          </div>
         </div>
       </div>
     </section>
@@ -1597,8 +1628,12 @@ function gotoRewardSection() {
 function bindForms() {
   $('formIn').addEventListener('submit', function (e) {
     e.preventDefault();
-    if (!$('arnIn').value.trim()) { $('arnIn').focus(); $('arnIn').style.borderColor = 'var(--mh-secondary-900)'; return; }
-    if (!document.querySelector('input[name="rewardIn"]:checked')) { alert('請選擇您的獎賞。'); return; }
+    var required = ['rewardSelectIn','emailIn','nameIn','phoneIn','dateIn'];
+    for (var i = 0; i < required.length; i++) {
+      var f = $(required[i]);
+      if (!f.value.trim()) { f.focus(); f.style.borderColor = 'var(--mh-secondary-900)'; return; }
+    }
+    if (!$('c1In').checked || !$('c2In').checked || !$('c3In').checked) { alert('請剔選所有必需的同意項目。'); return; }
     show('screen-success');
   });
   $('formOut').addEventListener('submit', function (e) {
@@ -1652,8 +1687,8 @@ function init() {
   $('providerInReturn').addEventListener('click', function () { show('screen-edm'); });
 
   // Reward email (EDM) CTAs → log in to MoneyHero → My Rewards
-  $('edmClaim').addEventListener('click', function () { show('screen-my-rewards'); });
-  $('edmLogin').addEventListener('click', function () { show('screen-my-rewards'); });
+  $('edmClaim').addEventListener('click', function () { show('screen-redeem-in'); });   // primary CTA → redemption form
+  $('edmLogin').addEventListener('click', function () { show('screen-my-rewards'); });  // check-progress path → My Rewards
 
   // My Rewards claim card → prefilled form
   $('claimCardBtn').addEventListener('click', function () { show('screen-redeem-in'); });
