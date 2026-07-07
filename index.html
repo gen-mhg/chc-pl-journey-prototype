@@ -907,10 +907,15 @@
     <section class="screen" id="screen-login">
       <div class="chc-section">
         <div class="stepper" id="stepper-login"></div>
+        <!-- Second-method explainer (shown only when arriving via the header account entry) -->
+        <div id="loginSecondMethod" style="display:none;max-width:400px;margin:0 auto var(--mh-space-4);border:1px dashed var(--mh-primary-500);background:var(--mh-primary-50);border-radius:var(--mh-radius-md);padding:var(--mh-space-4);">
+          <span style="display:inline-block;font:var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);letter-spacing:.06em;background:var(--mh-primary-500);color:var(--mh-text-on-brand);padding:4px 10px;border-radius:var(--mh-radius-pill);margin-bottom:var(--mh-space-2);">SECOND WAY TO REACH THE FORM</span>
+          <p style="font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-en);color:var(--mh-text-secondary);">Besides tapping the reward email's CTA, a member can log in to MoneyHero and open <b>我的獎賞 (My Rewards)</b> to view and complete their redemption form. Log in below to continue.</p>
+        </div>
         <div class="login-screen">
           <img src="assets/moneyhero-logo.svg" alt="MoneyHero" class="ls-logo">
           <h2>立即登入或註冊</h2>
-          <p class="ls-sub">登入即可查看您的批核機會，並享精簡的獎賞換領流程。</p>
+          <p class="ls-sub">登入即可查看您的批核機會、獎賞換領表格及換領進度。</p>
           <button class="btn btn--google btn--block" id="loginGoogle">
             <span class="ls-google-icon">G</span>
             以 Google 帳號登入
@@ -1349,6 +1354,14 @@
 var loginState = 'in'; // 'in' | 'out'
 var loginReturnScreen = 'screen-listing'; // where to go after login
 
+/* Open the login screen; secondMethod=true shows the "second way to reach the form" explainer */
+function openLogin(returnScreen, secondMethod) {
+  loginReturnScreen = returnScreen;
+  var note = document.getElementById('loginSecondMethod');
+  if (note) note.style.display = secondMethod ? 'block' : 'none';
+  show('screen-login');
+}
+
 /* Loan card data — columns per live site */
 var LOANS = [
   { logo: 'welend.webp',  name: 'WeLend 私人貸款',     apr: '1.18%', rewardVal: 'HK$500 惠康現金券 + 1,888 HKD等值BTC', repay: 'HK$4,250', interest: 'HK$2,000', odds: 'high' },
@@ -1446,17 +1459,22 @@ function renderHeader() {
   var el = $('headerRight');
   if (loginState === 'in') {
     el.innerHTML =
+      '<a href="#" class="chc-header__action" id="headerMyRewards" style="margin-right:var(--mh-space-3);">我的獎賞</a>' +
       '<div class="chc-header__member">' +
         '<span class="name">Hi, Genevieve</span>' +
         '<span class="chc-header__avatar">G</span>' +
       '</div>';
+    var mr = $('headerMyRewards');
+    if (mr) mr.addEventListener('click', function (e) {
+      e.preventDefault();
+      openLogin('screen-my-rewards', true);   // second method: log in → My Rewards → form
+    });
   } else {
     el.innerHTML = '<a href="#" class="chc-header__action" id="headerLogin">登入</a>';
     var lg = $('headerLogin');
     if (lg) lg.addEventListener('click', function (e) {
       e.preventDefault();
-      loginReturnScreen = 'screen-listing';
-      show('screen-login');
+      openLogin('screen-listing', false);
     });
   }
 }
@@ -1501,8 +1519,7 @@ function renderLoans() {
   });
   $$('.odds--locked[data-login]').forEach(function (o) {
     o.addEventListener('click', function () {
-      loginReturnScreen = 'screen-listing';
-      show('screen-login');
+      openLogin('screen-listing', false);
     });
   });
 }
