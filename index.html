@@ -138,6 +138,12 @@
     color: var(--mh-primary-500);
     padding: 7px 14px; border: 1px solid var(--mh-primary-500); border-radius: var(--mh-radius-md);
   }
+  .chc-header__action.hdr-pulse { background: var(--mh-primary-50); animation: hdrPulse 1.3s ease-in-out infinite; }
+  @keyframes hdrPulse {
+    0%   { box-shadow: 0 0 0 0 var(--mh-primary-200); }
+    70%  { box-shadow: 0 0 0 8px transparent; }
+    100% { box-shadow: 0 0 0 0 transparent; }
+  }
   .chc-header__member { display: flex; align-items: center; gap: var(--mh-space-2); }
   .chc-header__member .name { font: var(--mh-fw-semibold) var(--mh-fs-body-2)/1 var(--mh-font-zh); }
   .chc-header__avatar {
@@ -970,6 +976,12 @@
         <!-- Demo scaffolding label -->
         <div style="background:var(--mh-gray-900);color:var(--mh-text-on-brand);font:var(--mh-fw-semibold) var(--mh-fs-caption)/1 var(--mh-font-en);padding:8px 14px;border-radius:var(--mh-radius-md);display:inline-block;margin-bottom:var(--mh-space-3);">DEMO — Email (EDM) the member receives after applying — not an auto-return</div>
 
+        <!-- Demo guidance: surface the two ways to reach the redemption form -->
+        <div style="border:1px dashed var(--mh-primary-500);background:var(--mh-primary-50);border-radius:var(--mh-radius-md);padding:var(--mh-space-4);margin-bottom:var(--mh-space-4);">
+          <span style="display:inline-block;font:var(--mh-fw-bold) var(--mh-fs-badge)/1 var(--mh-font-en);letter-spacing:.06em;background:var(--mh-primary-500);color:var(--mh-text-on-brand);padding:4px 10px;border-radius:var(--mh-radius-pill);margin-bottom:var(--mh-space-2);">🧭 DEMO TIP · TWO WAYS TO REACH THE FORM</span>
+          <p style="font:var(--mh-fw-medium) var(--mh-fs-body-2)/var(--mh-lh-body-2-relaxed) var(--mh-font-en);color:var(--mh-text-secondary);margin:0;">① Tap <b>填寫獎賞換領表格</b> in the email below to open the form directly — or — ② tap the highlighted <b>我的獎賞</b> link in the top-right header ↗ to log in and open it from <b>My Rewards</b> (step 4). Try either.</p>
+        </div>
+
         <div class="edm">
           <div class="edm__hero">
             <img src="assets/moneyhero-logo-white.svg" alt="MoneyHero">
@@ -1430,6 +1442,9 @@ function show(screenId) {
   $$('.screen').forEach(function (s) { s.classList.remove('active'); });
   var el = $(screenId);
   if (el) { el.classList.add('active'); }
+  // Draw attention to the header "我的獎賞" link (2nd way to the form) while the reward email is shown
+  var hmr = document.getElementById('headerMyRewards');
+  if (hmr) hmr.classList.toggle('hdr-pulse', screenId === 'screen-edm');
   window.scrollTo({ top: 0, behavior: 'auto' });
   renderStepper(screenId);
 }
